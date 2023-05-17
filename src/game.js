@@ -4,8 +4,6 @@ import loadState from './states/load'
 import menuState from './states/menu'
 import playState  from './states/play'
 
-import summaryState  from './states/summary'
-
 import { UAParser } from 'ua-parser-js';
 
 let Engine = {
@@ -16,9 +14,9 @@ let Engine = {
 	GAME_HEIGHT: 0,
 	GAME_WIDTH: 0,
 	BASE_URL: "/",
-	GAMEMODES: {
-		FREEPLAY: 1,
-		CAMPAIGN: 2
+	GAME_MODES: {
+		RUN: 1,
+		BOSS: 2
 	}
 };
 
@@ -65,7 +63,7 @@ export function runGame(gameOptions) {
 	Engine.deaths = 0;
 	Engine.levelDeaths = 0;
 	Engine.levelTime = 0;
-	Engine.campaignTime = 0;
+	Engine.gameMode = Engine.GAME_MODES.RUN;
 
 	setCavasSize();
 	Engine.game = new Phaser.Game(Engine.GAME_WIDTH, Engine.GAME_HEIGHT, Phaser.AUTO, 'game');
@@ -78,7 +76,6 @@ export function runGame(gameOptions) {
 	Engine.game.state.add('load', loadState);
 	Engine.game.state.add('menu', menuState);
 	Engine.game.state.add('play', playState);
-	Engine.game.state.add('summary', summaryState);
 
 	// Set current campaign
 	Engine.campaign = gameOptions.campaign;

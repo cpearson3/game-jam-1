@@ -7,3 +7,12 @@ export function distanceActive(o1, o2, _distance) {
 		return false;
 	}
 }
+
+export const range = (start, end) => {
+    const length = end - start;
+    return Array.from({ length }, (_, i) => start + i);
+}
+
+export const getRandomItem = (_array) => {
+	return _array[Engine.game.rnd.integerInRange(0,_array.length-1)];
+}

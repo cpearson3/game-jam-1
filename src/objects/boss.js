@@ -1,14 +1,20 @@
 
 import { range } from "../utils";
 
-export default class Player {
+const BOSS_DATA = {
+    sprite: "boss",
+    health: 50,
+    frames: 8,
+    frameRate: 8
+}
+
+export default class Boss {
 	constructor() {
-		this.startY = 0;
-		this.sprite = Engine.game.add.sprite(0, this.startY, 'player');
+		this.startY = Engine.GAME_HEIGHT - 70;
+		this.sprite = Engine.game.add.sprite(0, this.startY, 'boss');
 		
 		// set up animations
-		this.sprite.animations.add('left', range(0,Engine.playerData.frames / 2), Engine.playerData.frameRate, true);
-		this.sprite.animations.add('right', range(Engine.playerData.frames / 2, Engine.playerData.frames).reverse(), Engine.playerData.frameRate, true);
+		this.sprite.animations.add('fight', range(0,BOSS_DATA.frames), BOSS_DATA.frameRate, true);
 		
 		// set anchor
 		this.sprite.anchor.setTo(0.5, 0.5);
@@ -21,21 +27,18 @@ export default class Player {
 		this.health = 100;
 		this.nextFire = 0;
 		// this.fireRate =  450;
-		this.fireRate =  65;
+		this.fireRate =  350;
 		this.alive = true;
 
 		this.facing = 'right';		
 		this.moving = false;
 		this.speed = 306;
-
-		this.jumping = false;
-		this.jumpForce = -1000;
 		
 		// Projectile Group
 		this.projectiles = Engine.game.add.group();
 		this.projectiles.enableBody = true;
 		this.projectiles.physicsBodyType = Phaser.Physics.ARCADE;
-		this.projectiles.createMultiple(20,  'projectile', 0, false);
+		this.projectiles.createMultiple(20,  'blue-flame', 0, false);
 		this.projectiles.setAll('anchor.x', 0.5);
 		this.projectiles.setAll('anchor.y', 0.5);
 		this.projectiles.setAll('outOfBoundsKill', true);
@@ -43,14 +46,10 @@ export default class Player {
 
 	}
 
-	isGrounded() {
-		return this.sprite.body.blocked.down || this.sprite.body.touching.down;
-	}
-
 	jump() {
-		// If player is touching the ground
+		// If boss is touching the ground
 		if ( ((this.sprite.y + this.sprite.height / 2) > (Engine.GAME_HEIGHT - 10)) && this.alive ) {
-			// Move the player upward (jump)
+			// Move the boss upward (jump)
 			this.sprite.body.velocity.y = this.jumpForce;
 			// Engine.sounds["jump"].play();
 		}
@@ -81,19 +80,12 @@ export default class Player {
 					Engine.particles.startSmallExplosion(Engine.particles.puff, px, py);
 					projectile.reset(px, py);
 					
-					projectile.velocity = 150;
-					projectile.rotation =  Engine.game.physics.arcade.angleToPointer(projectile);
-					Engine.game.physics.arcade.velocityFromAngle(projectile.angle, 750, projectile.body.velocity);
+                    // Fire at player
+					projectile.velocity = 200;
+					Engine.game.physics.arcade.moveToObject(projectile,Engine.player.sprite,750);
 				}
 			}
 			
 		}
-	}
-
-	updateProjectiles() {
-		// Loop through alive projectiles
-		this.projectiles.forEachAlive(function(projectile) {
-			projectile.angle += Engine.game.rnd.integerInRange(2,5);			
-		}, this);
 	}
 }

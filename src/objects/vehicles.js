@@ -103,34 +103,31 @@ export default class Vehicles {
     }
 
     update() {
-        if (this.spawnTime < Engine.levelTime && Engine.score > 350) {
+        if (this.spawnTime < Engine.levelTime && Engine.score > 450) {
 			this.spawn();
-			this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2,4)
+			if (Engine.score < 5000) {
+				this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3,4);
+			} else if (Engine.score < 10000) {
+				this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2,4);
+			}
+			else {
+				this.spawnTime = Engine.levelTime + 2;
+			}
 		} 
 		this.group.forEachAlive(function(vehicle) {
-			// if (Engine.player.sprite.world.x - vehicle.world.x < 100) {
-			// 	vehicle.body.velocity.x = 0;
-			// }
+			// fire
 			if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0) {
-				let projectile = this.projectiles.getFirstExists(false);
-				let px = vehicle.centerX;
-				let py = vehicle.centerY;
-				projectile.reset(px, py);
-				Engine.game.physics.arcade.moveToObject(projectile,Engine.player.sprite,750);
-				vehicle.nextFire = Engine.game.time.now + vehicle.config.fireRate;
+				this.fire(vehicle);
 			}
 		}, this)
     }
 
 	fire(vehicle) {
-		if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0) {
-			
-			let projectile = this.projectiles.getFirstExists(false);
-			let px = vehicle.centerX;
-			let py = vehicle.centerY;
-			projectile.reset(px, py);
-			Engine.game.physics.arcade.moveToObject(projectile,Engine.player.sprite,120);
-			vehicle.nextFire = Engine.game.time.now + vehicle.fireRate;
-		}
+		let projectile = this.projectiles.getFirstExists(false);
+		let px = vehicle.centerX;
+		let py = vehicle.centerY;
+		projectile.reset(px, py);
+		Engine.game.physics.arcade.moveToObject(projectile,Engine.player.sprite,750);
+		vehicle.nextFire = Engine.game.time.now + vehicle.config.fireRate;
 	}
 }

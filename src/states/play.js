@@ -1,9 +1,12 @@
 // play state
+import Particles from '../objects/particles';
 
 import Player from '../objects/player'
 import Buildings from '../objects/buildings';
 import Vehicles from '../objects/vehicles';
-import Particles from '../objects/particles';
+import Powerups from '../objects/powerups';
+import Missiles from '../objects/missiles';
+
 
 const PlayState = {
 	create: function() {	
@@ -27,16 +30,9 @@ const PlayState = {
 		// Engine.sounds["ghost"] = Engine.game.add.audio('ghost');
 		// Engine.sounds["ghost"].allowMultiple = false;
 
-		/// Add a background image
-		// if (Engine.backgroundImage) {
-		// 	this.worlbg = Engine.game.add.image(0,0,'worlbg');
-		// 	this.worlbg.fixedToCamera = true;
-		// }
-
 		// Environment
 		this.environment = Engine.game.add.tileSprite(0, 0, Engine.GAME_WIDTH, Engine.GAME_HEIGHT, 'environment');
 		this.environment.fixedToCamera = true;
-		// this.clouds.alpha = 0.3;
 		this.environment.autoScroll(-Engine.SCROLL_SPEED, 0);
 
 		// create player
@@ -51,6 +47,12 @@ const PlayState = {
 		this.vehicles = new Vehicles;
 		this.buildings = new Buildings;
 
+		// Powerup group
+		this.powerups = new Powerups;
+
+		// Missiles
+		this.missiles = new Missiles;
+
 		// Set up Particle emitter functions
 		Engine.particles = new Particles;
 
@@ -60,28 +62,18 @@ const PlayState = {
 		this.drawHealthBar();
 		
 		// create score text
-		this.gameText = Engine.game.add.text(10, 10, '0', { font: "18px Space Mono", fill: "#ffffff", align: "left" });
+		this.gameText = Engine.game.add.text(10, 10, '0', { font: "18px Monospace", fill: "#ffffff", align: "left" });
 		this.gameText.fixedToCamera = true;
 
-		this.scoreText = Engine.game.add.text( Engine.game.camera.width - 160, 10, '0', { font: "18px Space Mono", fill: "#ffffff", align: "left" });
+		this.scoreText = Engine.game.add.text( Engine.game.camera.width - 160, 10, '0', { font: "18px Monospace", fill: "#ffffff", align: "left" });
 		this.scoreText.fixedToCamera = true;
-
-		// create game message text
-		this.messageBar = Engine.game.add.sprite(Engine.game.camera.width/2, 56, 'blackbar');
-		this.messageBar.anchor.setTo(0.5,0.5);
-		this.messageBar.fixedToCamera = true;
-		this.messageBar.alpha = 0;
-
-		this.messageText = Engine.game.add.text(Engine.game.camera.width/2, 56, '', { font: "18px Space Mono", fill: "#ffff00", align: "left" });
-		this.messageText.anchor.setTo(0.5, 0.5);
-		this.messageText.fixedToCamera = true;
 
 		// create cursor keys (up down left right)
 		this.input = {
 			// cursor:  Engine.game.input.keyboard.createCursorKeys(),
 			left: Engine.game.input.keyboard.addKey(Phaser.Keyboard.A),
 			right: Engine.game.input.keyboard.addKey(Phaser.Keyboard.D),
-			fire: Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR),
+			jump: Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR),
 		};
 
 		// START THE TIMER! 
@@ -89,7 +81,11 @@ const PlayState = {
 		this.levelTimer = Engine.game.time.create(false);
 		this.levelTimer.loop(100, function() {
 			Engine.levelTime += 0.1;
-			Engine.score += 1;
+
+			if (Engine.player.alive) {
+				Engine.score += 1;
+			}
+			
 		}, this);
 		this.levelTimer.start();
 	},
@@ -115,22 +111,44 @@ const PlayState = {
 		}
 	},
 	update: function() {
-		// clear message text
-		this.messageText.text = '';
-		this.messageBar.alpha = 0;
 
-		// Check group collisions with player / objects / projectiles
-		// Player and objects
-		Engine.game.physics.arcade.overlap(Engine.player.sprite, this.buildings.group, this.hitPlayerBuldings, null, this);
+		if (Engine.gameMode == Engine.GAME_MODES.RUN) {
+			// Check group collisions with player / objects / projectiles
+			// Player and objects
+			Engine.game.physics.arcade.overlap(Engine.player.sprite, this.buildings.group, this.hitPlayerBuldings, null, this);
+			Engine.game.physics.arcade.overlap(Engine.player.sprite, this.vehicles.group, this.hitPlayerVehicles, null, this);
+			Engine.game.physics.arcade.overlap(Engine.player.sprite, this.missiles.group, this.hitPlayerMissiles, null, this);
+			// Player projectiles and objects
+			Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.vehicles.group, this.hitProjectilesObjects, null, this);
+			Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.buildings.group, this.hitProjectilesObjects, null, this);
+			Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.missiles.group, this.hitProjectilesObjects, null, this);
+			// Player Powerups
+			Engine.game.physics.arcade.overlap(Engine.player.sprite, this.powerups.group, this.hitPlayerPowerups, null, this);
+
+			// Enemy projectiles
+			Engine.game.physics.arcade.overlap(Engine.player.sprite, this.vehicles.projectiles, this.hitPlayerEnemyProjectiles, null, this);
 		
-		// Player projectiles and objects
-		Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.vehicles.group, this.hitProjectilesObjects, null, this);
-		Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.buildings.group, this.hitProjectilesObjects, null, this);
-	
-		// Enemy projectiles
-		Engine.game.physics.arcade.overlap(Engine.player.sprite, this.vehicles.projectiles, this.hitPlayerEnemyProjectiles, null, this);
+			
+			
 
-		// Let them thangs go
+			// update enemies
+			this.vehicles.update();
+
+			// update buildings
+			this.buildings.update();
+
+			// update powerups
+			this.powerups.update();
+			// update Missiles
+			this.missiles.update();
+		} else if (Engine.gameMode == Engine.GAME_MODES.BOSS) {
+
+			// update Missiles
+			this.missiles.update();
+		}
+
+
+		// So anyways...
 		if (this.game.input.activePointer.isDown) {
 			Engine.player.fire();
 		}
@@ -138,15 +156,8 @@ const PlayState = {
 		// update player movement
 		this.updateMovement();
 
-		// update enemies
-		this.vehicles.update();
-
-		// update buildings
-		this.buildings.update();
-
-
-		// update projectile positions
-		this.updateProjectiles();
+		// update player projectile 
+		Engine.player.updateProjectiles();
 
 		// update text
 		const healthText = Engine.player.health > 0 ? Engine.player.health : 'dead';
@@ -158,18 +169,12 @@ const PlayState = {
 	movePlayer: function(direction) {
 		// Move the player
 		// Set direction factor. Negative = Left. Positive = Right
-		if (direction == 'left' || direction =='right') {
-			let directionFactor = direction == "left" ? -1 : 1;
+		let directionFactor = direction == "left" ? -1 : 1;
 
-			Engine.player.sprite.body.velocity.x = Engine.player.speed * directionFactor;
-			
-			Engine.player.facing = direction;
-			Engine.player.movingX = true;
-		} else {
-			let directionFactor = direction == "up" ? -1 : 1; 
-			Engine.player.sprite.body.velocity.y = Engine.player.speed * directionFactor;
-			Engine.player.movingY = true;
-		}
+		Engine.player.sprite.body.velocity.x = Engine.player.speed * directionFactor;
+		
+		Engine.player.facing = direction;
+		Engine.player.moving = true;
 
 		Engine.player.sprite.animations.play(Engine.player.facing);
 	},
@@ -186,47 +191,27 @@ const PlayState = {
 		}
 
 		// Stop the player
-		if (!Engine.player.movingX) {
+		if (!Engine.player.moving) {
 			Engine.player.sprite.body.velocity.x = 0;
 		}
-		if (!Engine.player.movingY) {
-			Engine.player.sprite.body.velocity.y = 0;
-		}
+		// if (!Engine.player.movingY) {
+		// 	Engine.player.sprite.body.velocity.y = 0;
+		// }
 
 		// Reset moving check for next update cycle
-		Engine.player.movingX = false;
-		Engine.player.movingY = false;
+		Engine.player.moving = false;
 
 		// Jump key 
-		// if (this.input.jump.isDown) {
-		// 	Engine.player.jump();			
-		// } 
-
-	},
-	updateProjectiles: function() {
-		// Loop through alive projectiles
-		Engine.player.projectiles.forEachAlive(function(projectile) {
-			projectile.angle += Engine.game.rnd.integerInRange(1,3);
-
-			// Update emitter position
-			if (projectile.emitter) {
-				// console.log(projectile)
-				projectile.emitter.x = projectile.world.x;
-				projectile.emitter.y = projectile.world.y;
-
-				if (projectile.emitter.x < 1 || projectile.emitter.x > Engine.GAME_WIDTH || projectile.emitter.y < 1 || projectile.emitter.y > Engine.GAME_HEIGHT) {
-					projectile.emitter.kill();
-				}
-			}
-			
-		}, this);
+		if (this.input.jump.isDown) {
+			Engine.player.jump();			
+		} 
 
 	},
 	// Callback for player projectile hits
 	hitProjectilesObjects: function(_projectile, _object) {
 
 		// deduct damage (TODO: make weapon types)
-		_object.health -= 1;
+		_object.health -= 0.333;
 
 		if (_object.health > 0) {
 			// small explosion
@@ -239,7 +224,7 @@ const PlayState = {
 			_projectile.kill();
 			
 			// score!
-			Engine.score += 5;
+			Engine.score += 2;
 		} else {
 			// destroy it
 			Engine.particles.startExplosion(Engine.particles.smoke, _object.centerX, _object.centerY);
@@ -247,6 +232,11 @@ const PlayState = {
 			// if building, add dust explosion
 			if (_object.objectType == 'building') {
 				Engine.particles.startCrumble(Engine.particles.dust, _object.centerX, _object.centerY);
+				// score!
+				Engine.score += 200;
+			} else {
+				// score!
+				Engine.score += 100;
 			}
 
 			if (_projectile.emitter) {
@@ -255,10 +245,62 @@ const PlayState = {
 			_projectile.kill();	
 			_object.kill();
 
-			// score!
-			Engine.score += 100;
 		}
 		
+	},
+	// Handle power up collisions
+	hitPlayerPowerups: function(_player, _powerup) {
+		// Check power up type
+		console.log(`hit: ${_powerup.config.sprite}`)
+		switch (_powerup.config.sprite) {
+		case "bomb-powerup":
+			// destroy vehicles
+			this.vehicles.group.forEach(function(vehicle) {
+				vehicle.kill();
+			}, this);
+
+			// destroy buildings
+			this.buildings.group.forEach(function(building) {
+				building.kill();
+			}, this);
+
+			// destroy missiles
+			this.missiles.group.forEach(function(missile) {
+				missile.kill();
+			}, this);
+
+			// Particle explosions
+			// Engine.particles.startExplosion(Engine.particles.stars, _player.centerX, _player.centerY);
+			Engine.particles.startExplosion(Engine.particles.bigSmoke, _player.centerX, _player.centerY);
+			// kill powerup
+			_powerup.kill();
+
+			// flash screen
+			Engine.game.camera.flash(0x8d4004, 850);
+			break;
+		case 'health-powerup':
+			// Particle explosions
+			Engine.particles.startSmallExplosion(Engine.particles.stars, _powerup.centerX, _powerup.centerY);
+
+			// kill powerup
+			_powerup.kill();
+
+			// flash screen and redraw health bar
+			Engine.game.camera.flash(0xff5454, 850);
+			this.drawHealthBar();
+
+			break;
+		default:
+			break;
+		}
+
+		
+		// Add score and health
+		Engine.score += _powerup.config.score;
+		Engine.player.health += _powerup.config.health;
+		Engine.player.health = Engine.player.health > 100 ? 100 : Engine.player.health;
+
+		return;
 	},
 	hitPlayerEnemyProjectiles: function(_player, _projectile) {
 		// deduct damage (TODO: make weapon types)
@@ -298,9 +340,40 @@ const PlayState = {
 			Engine.particles.startExplosion(Engine.particles.smoke, _building.centerX, _building.centerY);
 			_building.kill();
 			// score!
-			Engine.score += 100;
+			Engine.score += 150;
 		}
 
+		return;
+	},
+	hitPlayerVehicles: function(_player, _vehicle) {
+
+		// destroy it
+		
+		Engine.particles.startExplosion(Engine.particles.smoke, _vehicle.centerX, _vehicle.centerY);
+		Engine.particles.startSmallExplosion(Engine.particles.dust, _vehicle.centerX, _vehicle.centerY);
+
+		_vehicle.kill();
+		// score!
+		Engine.score += 100;
+
+		return;
+	},
+	// Missiles collisions
+	hitPlayerMissiles: function(_player, _missile) {
+		// ouch!
+		Engine.player.health -= _missile.config.damage;+
+
+		// destroy it
+		Engine.particles.startExplosion(Engine.particles.splat, _missile.centerX, _missile.centerY);
+		Engine.particles.startSmallExplosion(Engine.particles.smallSmoke, _missile.centerX, _missile.centerY);
+
+		_missile.kill();
+
+		this.drawHealthBar();
+
+		if (Engine.player.health < 1) {
+			this.playerDie();
+		}
 		return;
 	},
 	playerDie: function() {
@@ -311,13 +384,13 @@ const PlayState = {
 			Engine.levelDeaths += 1;
 			
 			Engine.player.sprite.kill();
-			// Flash, shake and yell
+			// Flash screen
 			Engine.game.camera.flash(0x5f1414, 850);
 			// Engine.sounds["dead"].play();
 		}
 
 		// Call the 'startMenu' function in 1000ms
-		Engine.game.time.events.add(2500, function() {
+		Engine.game.time.events.add(3500, function() {
 			// this.buildings.removeAll();
 			Engine.game.state.start('menu');
 		}, this);

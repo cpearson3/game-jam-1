@@ -12,7 +12,8 @@ export default class Particles {
         this.splat.setXSpeed(-75, 75);
         // Use some gravity for the particles
         this.splat.gravity = Engine.gravity / 2;
-        this.splat.setAlpha(1, 0, 1000);
+        this.splat.setAlpha(0.8, 0, 1000);
+        this.splat.setScale(1.15, 0.5, 1.15, 0.5, 1000);
 
         // // smoke effect
         this.smoke = Engine.game.add.emitter(0, 0, 125);
@@ -20,7 +21,7 @@ export default class Particles {
         this.smoke.setYSpeed(-250, 250);
         this.smoke.setXSpeed(-350, 50);
         this.smoke.setAlpha(1, 0, 2000);
-        this.smoke.setScale(3, 0, 3, 0, 2000);
+        this.smoke.setScale(3.5, 0, 3.5, 0, 2000);
 
         // // dust effect
         this.dust = Engine.game.add.emitter(0, 0, 125);
@@ -28,15 +29,15 @@ export default class Particles {
         this.dust.setYSpeed(-500, 500);
         this.dust.setXSpeed(-500, 250);
         this.dust.setAlpha(0.75, 0, 2000);
-        this.dust.setScale(1.5, 0, 1.5, 0, 2000);
+        this.dust.setScale(2, 0, 2, 0, 2000);
 
         // Puff
-        this.puff = Engine.game.add.emitter(0, 0, 150);
+        this.puff = Engine.game.add.emitter(0, 0, 100);
         this.puff.makeParticles('puff');
         this.puff.setYSpeed(-250, 250);
         this.puff.setXSpeed(-350, 350);
         this.puff.setAlpha(0.75, 0, 750);
-        this.puff.setScale(0.2, 1, 0.2, 1, 750);
+        this.puff.setScale(0, 1, 0, 1, 750);
 
         // small explosion particles
         this.smallSmoke = Engine.game.add.emitter(0, 0, 250);
@@ -44,7 +45,24 @@ export default class Particles {
         this.smallSmoke.setYSpeed(-100, 100);
         this.smallSmoke.setXSpeed(-100, 100);
         this.smallSmoke.setAlpha(1, 0, 1000);
-        this.smallSmoke.setScale(1.25, 0, 1.25, 0, 1000);
+        this.smallSmoke.setScale(0, 3, 0, 3, 1000);
+
+        // big explosion
+        this.bigSmoke = Engine.game.add.emitter(0, 0, 12);
+        this.bigSmoke.makeParticles('smoke');
+        this.bigSmoke.setYSpeed(-600, 600);
+        this.bigSmoke.setXSpeed(-600, 600);
+        this.bigSmoke.setAlpha(1, 0, 2500);
+        this.bigSmoke.setScale(7.5, 0, 7.5, 0, 2500);
+
+        // stars explosion particles
+        this.stars = Engine.game.add.emitter(0, 0, 50);
+        this.stars.makeParticles('yellow-star');
+        this.stars.setYSpeed(-300, 300);
+        this.stars.setXSpeed(-300, 300);
+        this.stars.setAlpha(1, 0, 2000);
+        this.stars.setScale(0.25, 1.5, 0.25, 1.5, 2000);
+
     }
 	startExplosion(emitter, x, y) {
         emitter.x = x;

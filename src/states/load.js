@@ -15,8 +15,10 @@ const LoadState = {
 		Engine.game.load.image('smoke', Engine.BASE_URL+'assets/smoke.png');
 		Engine.game.load.image('dust', Engine.BASE_URL+'assets/dust.png');
 		Engine.game.load.image('puff', Engine.BASE_URL+'assets/puff.png');
-		Engine.game.load.image('smoke-small', Engine.BASE_URL+'assets/smoke-small.png');
+		Engine.game.load.image('yellow-star', Engine.BASE_URL+'assets/yellow-star.png');
 		Engine.game.load.image('projectile', Engine.BASE_URL+'assets/projectile.png');
+		Engine.game.load.image('blue-flame',Engine.BASE_URL+'assets/blue-flame.png');
+		
 		Engine.game.load.image('environment', Engine.backgroundImage);
 		
 		// Buildings
@@ -25,19 +27,25 @@ const LoadState = {
 		Engine.game.load.image('small-building', Engine.BASE_URL+'assets/small-building.png');
 		Engine.game.load.image('tower-clock', Engine.BASE_URL+'assets/tower-clock.png');
 		Engine.game.load.image('small-tower', Engine.BASE_URL+'assets/small-tower.png');
-
+		Engine.game.load.image('warehouse', Engine.BASE_URL+'assets/warehouse.png');
 		// Enemies
 		Engine.game.load.image('truck',Engine.BASE_URL+'assets/truck.png');
 		Engine.game.load.image('tank',Engine.BASE_URL+'assets/tank.png');
 		Engine.game.load.image('chopper',Engine.BASE_URL+'assets/chopper-1.png');
 		Engine.game.load.image('jet',Engine.BASE_URL+'assets/jet.png');
+		Engine.game.load.image('missile', Engine.BASE_URL+'assets/missile.png');
+		Engine.game.load.image('missile-vertical', Engine.BASE_URL+'assets/missile-vertical.png');
+		
+		// Power up
+		Engine.game.load.image('bomb-powerup', Engine.BASE_URL+'assets/bomb-powerup.png');
+		Engine.game.load.image('health-powerup', Engine.BASE_URL+'assets/health-powerup.png');
 		// UI
 		Engine.game.load.image('start', Engine.BASE_URL+'assets/start.png');
 		
-		// Load player spritesheets
+		// Load spritesheets
 		let playerData = Engine.playerData;
 		Engine.game.load.spritesheet('player', Engine.BASE_URL+playerData.sprite, playerData.frameWidth, playerData.frameHeight);
-
+		Engine.game.load.spritesheet('boss', Engine.BASE_URL+'assets/boss.png', 483, 483);
 		// create graphics textures
 		Engine.textures = {};
 		let projectileGraphic = this.make.graphics({x: 0, y: 0, add: false});

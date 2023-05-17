@@ -1309,21 +1309,28 @@
       Engine.game.load.image("smoke", Engine.BASE_URL + "assets/smoke.png");
       Engine.game.load.image("dust", Engine.BASE_URL + "assets/dust.png");
       Engine.game.load.image("puff", Engine.BASE_URL + "assets/puff.png");
-      Engine.game.load.image("smoke-small", Engine.BASE_URL + "assets/smoke-small.png");
+      Engine.game.load.image("yellow-star", Engine.BASE_URL + "assets/yellow-star.png");
       Engine.game.load.image("projectile", Engine.BASE_URL + "assets/projectile.png");
+      Engine.game.load.image("blue-flame", Engine.BASE_URL + "assets/blue-flame.png");
       Engine.game.load.image("environment", Engine.backgroundImage);
       Engine.game.load.image("building-deco", Engine.BASE_URL + "assets/building-deco.png");
       Engine.game.load.image("pyramid-tower", Engine.BASE_URL + "assets/pyramid-tower.png");
       Engine.game.load.image("small-building", Engine.BASE_URL + "assets/small-building.png");
       Engine.game.load.image("tower-clock", Engine.BASE_URL + "assets/tower-clock.png");
       Engine.game.load.image("small-tower", Engine.BASE_URL + "assets/small-tower.png");
+      Engine.game.load.image("warehouse", Engine.BASE_URL + "assets/warehouse.png");
       Engine.game.load.image("truck", Engine.BASE_URL + "assets/truck.png");
       Engine.game.load.image("tank", Engine.BASE_URL + "assets/tank.png");
       Engine.game.load.image("chopper", Engine.BASE_URL + "assets/chopper-1.png");
       Engine.game.load.image("jet", Engine.BASE_URL + "assets/jet.png");
+      Engine.game.load.image("missile", Engine.BASE_URL + "assets/missile.png");
+      Engine.game.load.image("missile-vertical", Engine.BASE_URL + "assets/missile-vertical.png");
+      Engine.game.load.image("bomb-powerup", Engine.BASE_URL + "assets/bomb-powerup.png");
+      Engine.game.load.image("health-powerup", Engine.BASE_URL + "assets/health-powerup.png");
       Engine.game.load.image("start", Engine.BASE_URL + "assets/start.png");
       let playerData = Engine.playerData;
       Engine.game.load.spritesheet("player", Engine.BASE_URL + playerData.sprite, playerData.frameWidth, playerData.frameHeight);
+      Engine.game.load.spritesheet("boss", Engine.BASE_URL + "assets/boss.png", 483, 483);
       Engine.textures = {};
       let projectileGraphic = this.make.graphics({ x: 0, y: 0, add: false });
       projectileGraphic.beginFill(12109012);
@@ -1348,7 +1355,7 @@
       let levelY = 225;
       var levelLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, levelY, `KING METABOY`, { font: `${fontSize} Space Mono`, fill: "#ffffff" });
       levelLabel.anchor.setTo(0.5, 0.5);
-      let startY = levelY + 100;
+      let startY = levelY + 150;
       var startButton = Engine.game.add.sprite(Engine.GAME_WIDTH / 2, startY, "start");
       startButton.anchor.setTo(0.5, 0.5);
       startButton.alpha = 0.75;
@@ -1367,67 +1374,160 @@
   };
   var menu_default = MenuState;
 
-  // src/objects/player.js
+  // src/objects/particles.js
+  var Particles = class {
+    constructor() {
+      this.splat = Engine.game.add.emitter(0, 0, 250);
+      this.splat.makeParticles("pixel");
+      this.splat.setYSpeed(-100, 25);
+      this.splat.setXSpeed(-75, 75);
+      this.splat.gravity = Engine.gravity / 2;
+      this.splat.setAlpha(0.8, 0, 1e3);
+      this.splat.setScale(1.15, 0.5, 1.15, 0.5, 1e3);
+      this.smoke = Engine.game.add.emitter(0, 0, 125);
+      this.smoke.makeParticles("smoke");
+      this.smoke.setYSpeed(-250, 250);
+      this.smoke.setXSpeed(-350, 50);
+      this.smoke.setAlpha(1, 0, 2e3);
+      this.smoke.setScale(3.5, 0, 3.5, 0, 2e3);
+      this.dust = Engine.game.add.emitter(0, 0, 125);
+      this.dust.makeParticles("dust");
+      this.dust.setYSpeed(-500, 500);
+      this.dust.setXSpeed(-500, 250);
+      this.dust.setAlpha(0.75, 0, 2e3);
+      this.dust.setScale(2, 0, 2, 0, 2e3);
+      this.puff = Engine.game.add.emitter(0, 0, 100);
+      this.puff.makeParticles("puff");
+      this.puff.setYSpeed(-250, 250);
+      this.puff.setXSpeed(-350, 350);
+      this.puff.setAlpha(0.75, 0, 750);
+      this.puff.setScale(0, 1, 0, 1, 750);
+      this.smallSmoke = Engine.game.add.emitter(0, 0, 250);
+      this.smallSmoke.makeParticles("smoke");
+      this.smallSmoke.setYSpeed(-100, 100);
+      this.smallSmoke.setXSpeed(-100, 100);
+      this.smallSmoke.setAlpha(1, 0, 1e3);
+      this.smallSmoke.setScale(0, 3, 0, 3, 1e3);
+      this.bigSmoke = Engine.game.add.emitter(0, 0, 12);
+      this.bigSmoke.makeParticles("smoke");
+      this.bigSmoke.setYSpeed(-600, 600);
+      this.bigSmoke.setXSpeed(-600, 600);
+      this.bigSmoke.setAlpha(1, 0, 2500);
+      this.bigSmoke.setScale(7.5, 0, 7.5, 0, 2500);
+      this.stars = Engine.game.add.emitter(0, 0, 50);
+      this.stars.makeParticles("yellow-star");
+      this.stars.setYSpeed(-300, 300);
+      this.stars.setXSpeed(-300, 300);
+      this.stars.setAlpha(1, 0, 2e3);
+      this.stars.setScale(0.25, 1.5, 0.25, 1.5, 2e3);
+    }
+    startExplosion(emitter, x, y) {
+      emitter.x = x;
+      emitter.y = y;
+      emitter.start(true, 2e3, null, 24);
+      return;
+    }
+    startSmallExplosion(emitter, x, y) {
+      emitter.x = x;
+      emitter.y = y;
+      emitter.start(true, 1e3, null, 12);
+      return;
+    }
+    startDamageEmission(emitter, x, y) {
+      emitter.x = x;
+      emitter.y = y;
+      emitter.start(true, 2e3, null, 9);
+      return;
+    }
+    startSplat(emitter, x, y) {
+      emitter.x = x;
+      emitter.y = y;
+      if (Engine.splatter > 0) {
+        let splatter = 6 * Engine.splatter;
+        emitter.start(true, 600, null, splatter);
+      }
+    }
+    startCrumble(emitter, x, y) {
+      emitter.x = x;
+      emitter.y = y;
+      emitter.start(true, 1240, null, 10);
+    }
+  };
+
+  // src/utils.js
   var range = (start, end) => {
     const length = end - start;
     return Array.from({ length }, (_, i) => start + i);
   };
+  var getRandomItem = (_array) => {
+    return _array[Engine.game.rnd.integerInRange(0, _array.length - 1)];
+  };
+
+  // src/objects/player.js
   var Player = class {
     constructor() {
-      this.sprite = Engine.game.add.sprite(0, Engine.GAME_HEIGHT - 50, "player");
+      this.startY = 0;
+      this.sprite = Engine.game.add.sprite(0, this.startY, "player");
       this.sprite.animations.add("left", range(0, Engine.playerData.frames / 2), Engine.playerData.frameRate, true);
       this.sprite.animations.add("right", range(Engine.playerData.frames / 2, Engine.playerData.frames).reverse(), Engine.playerData.frameRate, true);
       this.sprite.anchor.setTo(0.5, 0.5);
       Engine.game.physics.arcade.enable(this.sprite);
-      this.sprite.body.gravity.y = Engine.gravity;
+      this.sprite.body.gravity.y = 2500;
       this.sprite.body.collideWorldBounds = true;
       this.health = 100;
       this.nextFire = 0;
-      this.fireRate = 500;
+      this.fireRate = 65;
       this.alive = true;
       this.facing = "right";
-      this.movingX = false;
-      this.movingY = false;
-      this.speed = 306 * Engine.playerData.speedFactor;
+      this.moving = false;
+      this.speed = 306;
+      this.jumping = false;
+      this.jumpForce = -1e3;
       this.projectiles = Engine.game.add.group();
       this.projectiles.enableBody = true;
       this.projectiles.physicsBodyType = Phaser.Physics.ARCADE;
-      this.projectiles.createMultiple(12, "projectile", 0, false);
+      this.projectiles.createMultiple(20, "projectile", 0, false);
       this.projectiles.setAll("anchor.x", 0.5);
       this.projectiles.setAll("anchor.y", 0.5);
       this.projectiles.setAll("outOfBoundsKill", true);
       this.projectiles.setAll("checkWorldBounds", true);
+    }
+    isGrounded() {
+      return this.sprite.body.blocked.down || this.sprite.body.touching.down;
+    }
+    jump() {
+      if (this.sprite.y + this.sprite.height / 2 > Engine.GAME_HEIGHT - 10 && this.alive) {
+        this.sprite.body.velocity.y = this.jumpForce;
+      }
     }
     fire() {
       if (Engine.game.time.now > this.nextFire && this.projectiles.countDead() > 0 && this.alive) {
         this.nextFire = Engine.game.time.now + this.fireRate;
         for (let i = 0; i < 2; i++) {
           let projectile = this.projectiles.getFirstExists(false);
-          let px;
-          let py;
-          if (i == 0) {
-            px = this.sprite.x - 50;
-            py = this.sprite.y - 100;
-          } else {
-            px = this.sprite.x + 50;
-            py = this.sprite.y - 100;
+          if (projectile) {
+            let px;
+            let py;
+            if (i == 0) {
+              px = this.sprite.x - 50;
+              py = this.sprite.y - 100;
+            } else {
+              px = this.sprite.x + 50;
+              py = this.sprite.y - 100;
+            }
+            Engine.particles.startSmallExplosion(Engine.particles.puff, px, py);
+            projectile.reset(px, py);
+            projectile.velocity = 150;
+            projectile.rotation = Engine.game.physics.arcade.angleToPointer(projectile);
+            Engine.game.physics.arcade.velocityFromAngle(projectile.angle, 750, projectile.body.velocity);
           }
-          projectile.reset(px, py);
-          projectile.velocity = 150;
-          projectile.rotation = Engine.game.physics.arcade.angleToPointer(projectile);
-          Engine.game.physics.arcade.velocityFromAngle(projectile.angle, 750, projectile.body.velocity);
-          projectile.emitter = Engine.game.add.emitter(px, py, 100);
-          projectile.emitter.placement = "top";
-          projectile.emitter.makeParticles("smoke");
-          projectile.emitter.setYSpeed(0);
-          projectile.emitter.setXSpeed(-350);
-          projectile.emitter.gravity = 0;
-          projectile.emitter.setAlpha(1, 0, 500);
-          projectile.emitter.setScale(0.7, 0.5, 0.7, 0.5, 1e3);
-          projectile.emitter.start(false, 500, 150);
-          Engine.particles.startSmallExplosion(Engine.particles.puff, px, py);
         }
       }
+    }
+    updateProjectiles() {
+      this.projectiles.forEachAlive(function(projectile) {
+        projectile.angle += Engine.game.rnd.integerInRange(2, 5);
+      }, this);
     }
   };
 
@@ -1437,31 +1537,37 @@
       sprite: "building-deco",
       height: 400,
       width: 250,
-      health: 8
+      health: 10
     },
     {
       sprite: "small-building",
       height: 350,
       width: 390,
-      health: 4
+      health: 6
     },
     {
       sprite: "pyramid-tower",
       height: 600,
       width: 200,
-      health: 6
+      health: 8
     },
     {
       sprite: "tower-clock",
       height: 400,
       width: 144,
-      health: 4
+      health: 8
     },
     {
       sprite: "small-tower",
       height: 300,
       width: 300,
-      health: 4
+      health: 6
+    },
+    {
+      sprite: "warehouse",
+      height: 291,
+      width: 350,
+      health: 8
     }
   ];
   var Buildings = class {
@@ -1490,7 +1596,7 @@
     update() {
       if (this.spawnTime < Engine.levelTime) {
         this.spawn();
-        this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3, 5);
+        this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3, 4);
       }
     }
   };
@@ -1582,97 +1688,148 @@
       return vehicle;
     }
     update() {
-      if (this.spawnTime < Engine.levelTime && Engine.score > 350) {
+      if (this.spawnTime < Engine.levelTime && Engine.score > 450) {
         this.spawn();
-        this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2, 4);
+        if (Engine.score < 5e3) {
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3, 4);
+        } else if (Engine.score < 1e4) {
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2, 4);
+        } else {
+          this.spawnTime = Engine.levelTime + 2;
+        }
       }
       this.group.forEachAlive(function(vehicle) {
         if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0) {
-          let projectile = this.projectiles.getFirstExists(false);
-          let px = vehicle.centerX;
-          let py = vehicle.centerY;
-          projectile.reset(px, py);
-          Engine.game.physics.arcade.moveToObject(projectile, Engine.player.sprite, 750);
-          vehicle.nextFire = Engine.game.time.now + vehicle.config.fireRate;
+          this.fire(vehicle);
         }
       }, this);
     }
     fire(vehicle) {
-      if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0) {
-        let projectile = this.projectiles.getFirstExists(false);
-        let px = vehicle.centerX;
-        let py = vehicle.centerY;
-        projectile.reset(px, py);
-        Engine.game.physics.arcade.moveToObject(projectile, Engine.player.sprite, 120);
-        vehicle.nextFire = Engine.game.time.now + vehicle.fireRate;
+      let projectile = this.projectiles.getFirstExists(false);
+      let px = vehicle.centerX;
+      let py = vehicle.centerY;
+      projectile.reset(px, py);
+      Engine.game.physics.arcade.moveToObject(projectile, Engine.player.sprite, 750);
+      vehicle.nextFire = Engine.game.time.now + vehicle.config.fireRate;
+    }
+  };
+
+  // src/objects/powerups.js
+  var POWERUP_TYPES = [
+    {
+      sprite: "bomb-powerup",
+      height: 64,
+      width: 64,
+      score: 500,
+      health: 0
+    },
+    {
+      sprite: "health-powerup",
+      height: 64,
+      width: 64,
+      score: 500,
+      health: 25
+    }
+  ];
+  var Powerups = class {
+    constructor() {
+      this.group = Engine.game.add.group();
+      this.group.enableBody = true;
+      this.group.physicsBodyType = Phaser.Physics.ARCADE;
+      this.group.setAll("outOfBoundsKill", true);
+      this.group.setAll("checkWorldBounds", true);
+      this.spawnTime = 0;
+    }
+    spawn() {
+      const powerupType = POWERUP_TYPES[Engine.game.rnd.integerInRange(0, POWERUP_TYPES.length - 1)];
+      let powerup = this.group.create(
+        Engine.game.rnd.integerInRange(Engine.GAME_WIDTH * 0.25, Engine.GAME_WIDTH * 0.75),
+        1,
+        powerupType.sprite
+      );
+      powerup.body.gravity.y = 0;
+      powerup.body.immovable = true;
+      powerup.body.velocity.y = 450;
+      powerup.objectType = "powerup";
+      powerup.config = powerupType;
+      return powerup;
+    }
+    update() {
+      if (this.spawnTime < Engine.levelTime && Engine.score > 3500) {
+        this.spawn();
+        if (Engine.score < 9e3) {
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(11, 13);
+        } else if (Engine.score < 15e3) {
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(7, 9);
+        } else {
+          this.spawnTime = Engine.levelTime + 5;
+        }
       }
     }
   };
 
-  // src/objects/particles.js
-  var Particles = class {
+  // src/objects/missiles.js
+  var MISSLE_TYPES = [
+    {
+      sprite: "missile",
+      height: 28,
+      width: 105,
+      health: 2,
+      speed: 250,
+      damage: 15
+    },
+    {
+      sprite: "missile-vertical",
+      height: 75,
+      width: 69,
+      health: 2,
+      speed: 66,
+      damage: 15
+    }
+  ];
+  var Missiles = class {
     constructor() {
-      this.splat = Engine.game.add.emitter(0, 0, 250);
-      this.splat.makeParticles("pixel");
-      this.splat.setYSpeed(-100, 25);
-      this.splat.setXSpeed(-75, 75);
-      this.splat.gravity = Engine.gravity / 2;
-      this.splat.setAlpha(1, 0, 1e3);
-      this.smoke = Engine.game.add.emitter(0, 0, 125);
-      this.smoke.makeParticles("smoke");
-      this.smoke.setYSpeed(-250, 250);
-      this.smoke.setXSpeed(-350, 50);
-      this.smoke.setAlpha(1, 0, 2e3);
-      this.smoke.setScale(3, 0, 3, 0, 2e3);
-      this.dust = Engine.game.add.emitter(0, 0, 125);
-      this.dust.makeParticles("dust");
-      this.dust.setYSpeed(-500, 500);
-      this.dust.setXSpeed(-500, 250);
-      this.dust.setAlpha(0.75, 0, 2e3);
-      this.dust.setScale(1.5, 0, 1.5, 0, 2e3);
-      this.puff = Engine.game.add.emitter(0, 0, 150);
-      this.puff.makeParticles("puff");
-      this.puff.setYSpeed(-250, 250);
-      this.puff.setXSpeed(-350, 350);
-      this.puff.setAlpha(0.75, 0, 750);
-      this.puff.setScale(0.2, 1, 0.2, 1, 750);
-      this.smallSmoke = Engine.game.add.emitter(0, 0, 250);
-      this.smallSmoke.makeParticles("smoke");
-      this.smallSmoke.setYSpeed(-100, 100);
-      this.smallSmoke.setXSpeed(-100, 100);
-      this.smallSmoke.setAlpha(1, 0, 1e3);
-      this.smallSmoke.setScale(1.25, 0, 1.25, 0, 1e3);
+      this.group = Engine.game.add.group();
+      this.group.enableBody = true;
+      this.group.physicsBodyType = Phaser.Physics.ARCADE;
+      this.group.setAll("checkWorldBounds", true);
+      this.spawnTime = 0;
     }
-    startExplosion(emitter, x, y) {
-      emitter.x = x;
-      emitter.y = y;
-      emitter.start(true, 2e3, null, 24);
-      return;
-    }
-    startSmallExplosion(emitter, x, y) {
-      emitter.x = x;
-      emitter.y = y;
-      emitter.start(true, 1e3, null, 12);
-      return;
-    }
-    startDamageEmission(emitter, x, y) {
-      emitter.x = x;
-      emitter.y = y;
-      emitter.start(true, 2e3, null, 9);
-      return;
-    }
-    startSplat(emitter, x, y) {
-      emitter.x = x;
-      emitter.y = y;
-      if (Engine.splatter > 0) {
-        let splatter = 6 * Engine.splatter;
-        emitter.start(true, 600, null, splatter);
+    spawn() {
+      const missileType = getRandomItem(MISSLE_TYPES);
+      let vx, vy;
+      if (missileType.sprite == "missile") {
+        vx = 0;
+        vy = Engine.GAME_HEIGHT * (Engine.game.rnd.integerInRange(35, 65) / 100);
+      } else {
+        vx = Engine.GAME_WIDTH * (Engine.game.rnd.integerInRange(35, 95) / 100);
+        vy = 0;
       }
+      let missle = this.group.create(
+        vx,
+        vy,
+        missileType.sprite
+      );
+      missle.body.gravity.y = 0;
+      missle.body.immovable = true;
+      missle.body.velocity.x = missileType.sprite == "missile" ? missileType.speed : 0;
+      missle.body.velocity.y = missileType.sprite == "missile-vertical" ? missileType.speed : 0;
+      missle.health = missileType.health;
+      missle.config = missileType;
+      missle.objectType = "missle";
+      return missle;
     }
-    startCrumble(emitter, x, y) {
-      emitter.x = x;
-      emitter.y = y;
-      emitter.start(true, 1240, null, 10);
+    update() {
+      if (this.spawnTime < Engine.levelTime && Engine.score > 5e3) {
+        this.spawn();
+        if (Engine.score < 1e4) {
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(6, 8);
+        } else if (Engine.score < 15e3) {
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(4, 5);
+        } else {
+          this.spawnTime = Engine.levelTime + 2;
+        }
+      }
     }
   };
 
@@ -1690,32 +1847,29 @@
       Engine.game.camera.follow(Engine.player.sprite, Phaser.Camera.FOLLOW_PLATFORMER);
       this.vehicles = new Vehicles();
       this.buildings = new Buildings();
+      this.powerups = new Powerups();
+      this.missiles = new Missiles();
       Engine.particles = new Particles();
       this.healthBar = Engine.game.add.graphics(8, 8);
       this.healthBar.fixedToCamera = true;
       this.drawHealthBar();
-      this.gameText = Engine.game.add.text(10, 10, "0", { font: "18px Space Mono", fill: "#ffffff", align: "left" });
+      this.gameText = Engine.game.add.text(10, 10, "0", { font: "18px Monospace", fill: "#ffffff", align: "left" });
       this.gameText.fixedToCamera = true;
-      this.scoreText = Engine.game.add.text(Engine.game.camera.width - 160, 10, "0", { font: "18px Space Mono", fill: "#ffffff", align: "left" });
+      this.scoreText = Engine.game.add.text(Engine.game.camera.width - 160, 10, "0", { font: "18px Monospace", fill: "#ffffff", align: "left" });
       this.scoreText.fixedToCamera = true;
-      this.messageBar = Engine.game.add.sprite(Engine.game.camera.width / 2, 56, "blackbar");
-      this.messageBar.anchor.setTo(0.5, 0.5);
-      this.messageBar.fixedToCamera = true;
-      this.messageBar.alpha = 0;
-      this.messageText = Engine.game.add.text(Engine.game.camera.width / 2, 56, "", { font: "18px Space Mono", fill: "#ffff00", align: "left" });
-      this.messageText.anchor.setTo(0.5, 0.5);
-      this.messageText.fixedToCamera = true;
       this.input = {
         // cursor:  Engine.game.input.keyboard.createCursorKeys(),
         left: Engine.game.input.keyboard.addKey(Phaser.Keyboard.A),
         right: Engine.game.input.keyboard.addKey(Phaser.Keyboard.D),
-        fire: Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
+        jump: Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
       };
       Engine.levelTime = 0;
       this.levelTimer = Engine.game.time.create(false);
       this.levelTimer.loop(100, function() {
         Engine.levelTime += 0.1;
-        Engine.score += 1;
+        if (Engine.player.alive) {
+          Engine.score += 1;
+        }
       }, this);
       this.levelTimer.start();
     },
@@ -1736,34 +1890,36 @@
       }
     },
     update: function() {
-      this.messageText.text = "";
-      this.messageBar.alpha = 0;
-      Engine.game.physics.arcade.overlap(Engine.player.sprite, this.buildings.group, this.hitPlayerBuldings, null, this);
-      Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.vehicles.group, this.hitProjectilesObjects, null, this);
-      Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.buildings.group, this.hitProjectilesObjects, null, this);
-      Engine.game.physics.arcade.overlap(Engine.player.sprite, this.vehicles.projectiles, this.hitPlayerEnemyProjectiles, null, this);
+      if (Engine.gameMode == Engine.GAME_MODES.RUN) {
+        Engine.game.physics.arcade.overlap(Engine.player.sprite, this.buildings.group, this.hitPlayerBuldings, null, this);
+        Engine.game.physics.arcade.overlap(Engine.player.sprite, this.vehicles.group, this.hitPlayerVehicles, null, this);
+        Engine.game.physics.arcade.overlap(Engine.player.sprite, this.missiles.group, this.hitPlayerMissiles, null, this);
+        Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.vehicles.group, this.hitProjectilesObjects, null, this);
+        Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.buildings.group, this.hitProjectilesObjects, null, this);
+        Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.missiles.group, this.hitProjectilesObjects, null, this);
+        Engine.game.physics.arcade.overlap(Engine.player.sprite, this.powerups.group, this.hitPlayerPowerups, null, this);
+        Engine.game.physics.arcade.overlap(Engine.player.sprite, this.vehicles.projectiles, this.hitPlayerEnemyProjectiles, null, this);
+        this.vehicles.update();
+        this.buildings.update();
+        this.powerups.update();
+        this.missiles.update();
+      } else if (Engine.gameMode == Engine.GAME_MODES.BOSS) {
+        this.missiles.update();
+      }
       if (this.game.input.activePointer.isDown) {
         Engine.player.fire();
       }
       this.updateMovement();
-      this.vehicles.update();
-      this.buildings.update();
-      this.updateProjectiles();
+      Engine.player.updateProjectiles();
       const healthText = Engine.player.health > 0 ? Engine.player.health : "dead";
       this.gameText.text = `Health: ${healthText}`;
       this.scoreText.text = `Score: ${Engine.score}`;
     },
     movePlayer: function(direction) {
-      if (direction == "left" || direction == "right") {
-        let directionFactor = direction == "left" ? -1 : 1;
-        Engine.player.sprite.body.velocity.x = Engine.player.speed * directionFactor;
-        Engine.player.facing = direction;
-        Engine.player.movingX = true;
-      } else {
-        let directionFactor = direction == "up" ? -1 : 1;
-        Engine.player.sprite.body.velocity.y = Engine.player.speed * directionFactor;
-        Engine.player.movingY = true;
-      }
+      let directionFactor = direction == "left" ? -1 : 1;
+      Engine.player.sprite.body.velocity.x = Engine.player.speed * directionFactor;
+      Engine.player.facing = direction;
+      Engine.player.moving = true;
       Engine.player.sprite.animations.play(Engine.player.facing);
     },
     updateMovement: function() {
@@ -1772,49 +1928,70 @@
       } else if (this.input.right.isDown) {
         this.movePlayer("right");
       }
-      if (!Engine.player.movingX) {
+      if (!Engine.player.moving) {
         Engine.player.sprite.body.velocity.x = 0;
       }
-      if (!Engine.player.movingY) {
-        Engine.player.sprite.body.velocity.y = 0;
+      Engine.player.moving = false;
+      if (this.input.jump.isDown) {
+        Engine.player.jump();
       }
-      Engine.player.movingX = false;
-      Engine.player.movingY = false;
-    },
-    updateProjectiles: function() {
-      Engine.player.projectiles.forEachAlive(function(projectile) {
-        projectile.angle += Engine.game.rnd.integerInRange(1, 3);
-        if (projectile.emitter) {
-          projectile.emitter.x = projectile.world.x;
-          projectile.emitter.y = projectile.world.y;
-          if (projectile.emitter.x < 1 || projectile.emitter.x > Engine.GAME_WIDTH || projectile.emitter.y < 1 || projectile.emitter.y > Engine.GAME_HEIGHT) {
-            projectile.emitter.kill();
-          }
-        }
-      }, this);
     },
     // Callback for player projectile hits
     hitProjectilesObjects: function(_projectile, _object) {
-      _object.health -= 1;
+      _object.health -= 0.333;
       if (_object.health > 0) {
         Engine.particles.startSmallExplosion(Engine.particles.smallSmoke, _projectile.centerX + 50, _projectile.centerY);
         if (_projectile.emitter) {
           _projectile.emitter.destroy();
         }
         _projectile.kill();
-        Engine.score += 5;
+        Engine.score += 2;
       } else {
         Engine.particles.startExplosion(Engine.particles.smoke, _object.centerX, _object.centerY);
         if (_object.objectType == "building") {
           Engine.particles.startCrumble(Engine.particles.dust, _object.centerX, _object.centerY);
+          Engine.score += 200;
+        } else {
+          Engine.score += 100;
         }
         if (_projectile.emitter) {
           _projectile.emitter.destroy();
         }
         _projectile.kill();
         _object.kill();
-        Engine.score += 100;
       }
+    },
+    // Handle power up collisions
+    hitPlayerPowerups: function(_player, _powerup) {
+      console.log(`hit: ${_powerup.config.sprite}`);
+      switch (_powerup.config.sprite) {
+        case "bomb-powerup":
+          this.vehicles.group.forEach(function(vehicle) {
+            vehicle.kill();
+          }, this);
+          this.buildings.group.forEach(function(building) {
+            building.kill();
+          }, this);
+          this.missiles.group.forEach(function(missile) {
+            missile.kill();
+          }, this);
+          Engine.particles.startExplosion(Engine.particles.bigSmoke, _player.centerX, _player.centerY);
+          _powerup.kill();
+          Engine.game.camera.flash(9256964, 850);
+          break;
+        case "health-powerup":
+          Engine.particles.startSmallExplosion(Engine.particles.stars, _powerup.centerX, _powerup.centerY);
+          _powerup.kill();
+          Engine.game.camera.flash(16733268, 850);
+          this.drawHealthBar();
+          break;
+        default:
+          break;
+      }
+      Engine.score += _powerup.config.score;
+      Engine.player.health += _powerup.config.health;
+      Engine.player.health = Engine.player.health > 100 ? 100 : Engine.player.health;
+      return;
     },
     hitPlayerEnemyProjectiles: function(_player, _projectile) {
       Engine.player.health -= 1;
@@ -1840,7 +2017,27 @@
       } else {
         Engine.particles.startExplosion(Engine.particles.smoke, _building.centerX, _building.centerY);
         _building.kill();
-        Engine.score += 100;
+        Engine.score += 150;
+      }
+      return;
+    },
+    hitPlayerVehicles: function(_player, _vehicle) {
+      Engine.particles.startExplosion(Engine.particles.smoke, _vehicle.centerX, _vehicle.centerY);
+      Engine.particles.startSmallExplosion(Engine.particles.dust, _vehicle.centerX, _vehicle.centerY);
+      _vehicle.kill();
+      Engine.score += 100;
+      return;
+    },
+    // Missiles collisions
+    hitPlayerMissiles: function(_player, _missile) {
+      Engine.player.health -= _missile.config.damage;
+      +// destroy it
+      Engine.particles.startExplosion(Engine.particles.splat, _missile.centerX, _missile.centerY);
+      Engine.particles.startSmallExplosion(Engine.particles.smallSmoke, _missile.centerX, _missile.centerY);
+      _missile.kill();
+      this.drawHealthBar();
+      if (Engine.player.health < 1) {
+        this.playerDie();
       }
       return;
     },
@@ -1852,7 +2049,7 @@
         Engine.player.sprite.kill();
         Engine.game.camera.flash(6231060, 850);
       }
-      Engine.game.time.events.add(2500, function() {
+      Engine.game.time.events.add(3500, function() {
         Engine.game.state.start("menu");
       }, this);
     },
@@ -1860,65 +2057,6 @@
     }
   };
   var play_default = PlayState;
-
-  // src/states/summary.js
-  var SummaryState = {
-    create: function() {
-      this.LEVEL_NAME = `${Engine.campaign} ${Engine.currentMap + 1}`;
-      this.congrats = [];
-      if (Engine.score == 100) {
-        this.congrats.push("PERFECT RUN!");
-      } else if (Engine.score < 11) {
-        this.congrats.push("YOU BARELY ESCAPED!");
-      }
-      if (this.isBestTime) {
-        this.congrats.push("NEW BEST TIME!");
-      }
-      Engine.game.camera.reset();
-      Engine.game.stage.backgroundColor = "#0a0401";
-      var clouds = Engine.game.add.tileSprite(0, 0, Engine.game.width, Engine.game.height, "clouds");
-      clouds.fixedToCamera = true;
-      clouds.alpha = 0.33;
-      clouds.autoScroll(-10, -1);
-      let startKey = Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-      startKey.onDown.addOnce(this.start, this);
-      if (Engine.currentMap < Engine.maps.length - 1) {
-        this.buildSummaryUI();
-      } else {
-        this.buildEndgameUI();
-      }
-      var startLabel = Engine.game.add.sprite(Engine.game.camera.width / 2, Engine.game.camera.height - 160, "start");
-      startLabel.anchor.setTo(0.5, 0.5);
-      startLabel.alpha = 0.75;
-      startLabel.inputEnabled = true;
-      startLabel.input.useHandCursor = true;
-      startLabel.events.onInputUp.add(this.start, this);
-      Engine.game.add.tween(startLabel).to({ alpha: 1 }, 1e3, Phaser.Easing.Linear.None, true, 0.75, 500, true);
-    },
-    buildSummaryUI() {
-      let nameLabel = Engine.game.add.text(Engine.game.camera.width / 2, 64, `Level ${Engine.currentMap + 1} complete`, { font: "32px Space Mono", fill: "#ffffff" });
-      nameLabel.anchor.setTo(0.5, 0.5);
-      let scoreLabel = Engine.game.add.text(Engine.game.camera.width / 2, 128, `Time: ${Engine.levelTime.toFixed(1)}`, { font: "32px Space Mono", fill: "#ffffff" });
-      scoreLabel.anchor.setTo(0.5, 0.5);
-      this.congrats.map((congrat, index) => {
-        let congratsLabel = Engine.game.add.text(Engine.game.camera.width / 2, 192 + index * 64, congrat, { font: "32px Space Mono", fill: "#ffffff" });
-        congratsLabel.anchor.setTo(0.5, 0.5);
-      });
-    },
-    buildEndgameUI() {
-      var nameLabel = Engine.game.add.text(Engine.game.camera.width / 2, 64, `You win!`, { font: "44px Space Mono", fill: "#ffffff" });
-      nameLabel.anchor.setTo(0.5, 0.5);
-      var scoreLabel = Engine.game.add.text(Engine.game.camera.width / 2, 128, `Time: ${Engine.levelTime.toFixed(1)}`, { font: "32px Space Mono", fill: "#ffffff" });
-      scoreLabel.anchor.setTo(0.5, 0.5);
-      var scoreLabel = Engine.game.add.text(Engine.game.camera.width / 2, 192, `Total Deaths: ${Engine.deaths}`, { font: "32px Space Mono", fill: "#ffffff" });
-      scoreLabel.anchor.setTo(0.5, 0.5);
-      this.congrats.map((congrat, index) => {
-        let congratsLabel = Engine.game.add.text(Engine.game.camera.width / 2, 256 + index * 64, congrat, { font: "24px Space Mono", fill: "#ffffff" });
-        congratsLabel.anchor.setTo(0.5, 0.5);
-      });
-    }
-  };
-  var summary_default = SummaryState;
 
   // src/game.js
   var import_ua_parser_js = __toESM(require_ua_parser());
@@ -1930,9 +2068,9 @@
     GAME_HEIGHT: 0,
     GAME_WIDTH: 0,
     BASE_URL: "/",
-    GAMEMODES: {
-      FREEPLAY: 1,
-      CAMPAIGN: 2
+    GAME_MODES: {
+      RUN: 1,
+      BOSS: 2
     }
   };
   var Phaser2 = window.Phaser;
@@ -1959,7 +2097,7 @@
     Engine2.deaths = 0;
     Engine2.levelDeaths = 0;
     Engine2.levelTime = 0;
-    Engine2.campaignTime = 0;
+    Engine2.gameMode = Engine2.GAME_MODES.RUN;
     setCavasSize();
     Engine2.game = new Phaser2.Game(Engine2.GAME_WIDTH, Engine2.GAME_HEIGHT, Phaser2.AUTO, "game");
     Engine2.musicPlaying = false;
@@ -1967,7 +2105,6 @@
     Engine2.game.state.add("load", load_default);
     Engine2.game.state.add("menu", menu_default);
     Engine2.game.state.add("play", play_default);
-    Engine2.game.state.add("summary", summary_default);
     Engine2.campaign = gameOptions.campaign;
     Engine2.running = true;
     Engine2.game.state.start("boot");
