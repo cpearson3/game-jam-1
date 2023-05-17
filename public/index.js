@@ -1350,10 +1350,10 @@
       Engine.game.camera.reset();
       Engine.game.stage.backgroundColor = "#0a0401";
       let fontSize = Engine.device.type == "mobile" ? "30px" : "44px";
-      var titleLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, 150, "GamesMeanEverything presents..", { font: `16px Space Mono`, fill: "#ffffff" });
+      var titleLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, 150, "GamesMeanEverything presents..", { font: `20px Monospace`, fill: "#ffffff" });
       titleLabel.anchor.setTo(0.5, 0.5);
       let levelY = 225;
-      var levelLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, levelY, `KING METABOY`, { font: `${fontSize} Space Mono`, fill: "#ffffff" });
+      var levelLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, levelY, `METABOY GAME JAM #2`, { font: `${fontSize} Monospace`, fill: "#ffffff" });
       levelLabel.anchor.setTo(0.5, 0.5);
       let startY = levelY + 150;
       var startButton = Engine.game.add.sprite(Engine.GAME_WIDTH / 2, startY, "start");
@@ -1362,6 +1362,9 @@
       startButton.inputEnabled = true;
       startButton.input.useHandCursor = true;
       startButton.events.onInputUp.add(this.start, this);
+      let instructionsY = startY + 100;
+      var instructionsLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, instructionsY, `A + S Moves, SPACE Jumps, MOUSE Shoots `, { font: `16px Monospace`, fill: "#ffffff" });
+      instructionsLabel.anchor.setTo(0.5, 0.5);
       Engine.game.add.tween(startButton).to({ alpha: 1 }, 1e3, Phaser.Easing.Linear.None, true, 0.75, 500, true);
       var startKey = Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
       startKey.onDown.addOnce(this.start, this);
@@ -1743,7 +1746,7 @@
     spawn() {
       const powerupType = POWERUP_TYPES[Engine.game.rnd.integerInRange(0, POWERUP_TYPES.length - 1)];
       let powerup = this.group.create(
-        Engine.game.rnd.integerInRange(Engine.GAME_WIDTH * 0.25, Engine.GAME_WIDTH * 0.75),
+        Engine.game.rnd.integerInRange(Engine.GAME_WIDTH * 0.2, Engine.GAME_WIDTH * 0.8),
         1,
         powerupType.sprite
       );
@@ -2067,7 +2070,7 @@
     SCROLL_SPEED: 50,
     GAME_HEIGHT: 0,
     GAME_WIDTH: 0,
-    BASE_URL: "/",
+    BASE_URL: "",
     GAME_MODES: {
       RUN: 1,
       BOSS: 2
@@ -2116,7 +2119,7 @@
     runGame({
       // backgroundColor: "#a9d8e8",
       backgroundColor: "#1c0000",
-      backgroundImage: "/assets/environment.png",
+      backgroundImage: "assets/environment.png",
       // music: "/assets/music/green-zone.mp3",
       playerData: {
         "name": "OG MetaBoy #8847",

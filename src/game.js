@@ -13,7 +13,7 @@ let Engine = {
 	SCROLL_SPEED: 50,
 	GAME_HEIGHT: 0,
 	GAME_WIDTH: 0,
-	BASE_URL: "/",
+	BASE_URL: "",
 	GAME_MODES: {
 		RUN: 1,
 		BOSS: 2

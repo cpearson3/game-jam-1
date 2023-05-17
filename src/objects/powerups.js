@@ -33,7 +33,7 @@ export default class Powerups {
 
         // create powerup sprite
 		let powerup = this.group.create(
-			Engine.game.rnd.integerInRange(Engine.GAME_WIDTH * 0.25, Engine.GAME_WIDTH * 0.75),
+			Engine.game.rnd.integerInRange(Engine.GAME_WIDTH * 0.20, Engine.GAME_WIDTH * 0.80),
 			1,
 			powerupType.sprite
 		);
