@@ -85,14 +85,3 @@ export function runGame(gameOptions) {
 	window.Engine = Engine;
 }
 
-export function endGame() {
-	if (Engine.game) {
-		// console.log('Destroying game');
-		Engine.game.destroy();
-	}
-}
-
-export function toggleSound() {
-	Engine.game.sound.mute = !Engine.game.sound.mute;
-}
-

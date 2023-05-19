@@ -4,7 +4,7 @@ import { range } from "../utils";
 export const PLAYER_STATES = {
 	NORMAL: 0,
 	FLAME: 1,
-	LAZER: 2 // TBD
+	ICE: 2 // TBD
 }
 
 export default class Player {
@@ -73,10 +73,17 @@ export default class Player {
 	update(_input) {
 
 		// check state
-		if (this.state == PLAYER_STATES.FLAME) {
+		switch(this.state) {
+		case PLAYER_STATES.FLAME:
+			// set tint
 			this.sprite.tint = 0xdb7b41;
-		} else {
+			break;
+		case PLAYER_STATES.ICE:
+			this.sprite.tint = 0x00cdff;
+			break;
+		default:
 			this.sprite.tint = 0xffffff;
+			break;
 		}
 
 		// regen some health. you are a kaiju after all
@@ -147,11 +154,20 @@ export default class Player {
 					Engine.game.physics.arcade.velocityFromAngle(projectile.angle, 750, projectile.body.velocity);
 
 					// check state for alterations
-					if (this.state == PLAYER_STATES.FLAME) {
+					switch(this.state) {
+					case PLAYER_STATES.FLAME:
 						projectile.scale.setTo(2.5);
-					} else {
+						break;
+					case PLAYER_STATES.ICE:
 						projectile.scale.setTo(1);
+						projectile.tint = 0x00cdff;
+						break;
+					default:
+						projectile.scale.setTo(1);
+						projectile.tint = 0xffffff;
+						break;
 					}
+					
 				}
 			}
 			

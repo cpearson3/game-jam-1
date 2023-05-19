@@ -3,7 +3,7 @@ import Particles from '../objects/particles';
 
 import Player, { PLAYER_STATES } from '../objects/player'
 import Buildings from '../objects/buildings';
-import Vehicles from '../objects/vehicles';
+import Vehicles, { VEHICLE_STATES } from '../objects/vehicles';
 import Powerups from '../objects/powerups';
 import Missiles from '../objects/missiles';
 import Boss from '../objects/boss';
@@ -78,16 +78,17 @@ const PlayState = {
 		// Add sounds
 		this.music = Engine.game.add.audio("bg-music"); // Add the music
 		this.music.loop = true; // Make it loop
-		this.music.volume = 0.8;
+		this.music.volume = 0.7;
 		this.music.play(); // Start the music
 		
 		this.bossMusic = Engine.game.add.audio("boss-music"); // Add the music
 		this.bossMusic.loop = true; // Make it loop
-		this.bossMusic.volume = 0.9;
+		this.bossMusic.volume = 0.7;
 
 		Engine.sounds["health-powerup"] = Engine.game.add.audio("health-powerup");
 		Engine.sounds["flame-powerup"] = Engine.game.add.audio("flame-powerup");
 		Engine.sounds["bomb-powerup"] = Engine.game.add.audio("bomb-powerup");
+		Engine.sounds["ice-powerup"] = Engine.game.add.audio("ice-powerup");
 
 		Engine.sounds["jet"] = Engine.game.add.audio("jet");
 		Engine.sounds["truck"] = Engine.game.add.audio("truck");
@@ -142,7 +143,7 @@ const PlayState = {
 	update: function() {
 
 		// check game state and switch if necessary
-		if ( Engine.score > 500 && this.boss.health > 0 ) {
+		if ( Engine.score > 15000 && this.boss.health > 0 ) {
 			Engine.gameMode = Engine.GAME_MODES.BOSS;
 		}
 
@@ -174,7 +175,7 @@ const PlayState = {
 			this.missiles.update();
 
 			// check powerup time
-			if (this.player.state == PLAYER_STATES.FLAME && Engine.levelTime > this.player.powerupTime) {
+			if (this.player.state !== PLAYER_STATES.NORMAL && Engine.levelTime > this.player.powerupTime) {
 				this.player.state = PLAYER_STATES.NORMAL;
 				console.log(`new state: ${this.player.state}`)
 			}
@@ -272,13 +273,25 @@ const PlayState = {
 			// small explosion
 			Engine.particles.startSmallExplosion(Engine.particles.smallSmoke, _projectile.centerX + 50, _projectile.centerY);
 
-			// kill the projectile
-			if (this.player.state == PLAYER_STATES.NORMAL) {
+			// kill the projectile if not flame state
+			if (this.player.state != PLAYER_STATES.FLAME) {
 				_projectile.kill();
 			}
 			
 			// score!
 			Engine.score += 2;
+
+			// check player state
+			if (this.player.state == PLAYER_STATES.ICE) {
+				// freeze 
+				_object.tint = 0x00cdff;
+				if (_object.objectType == 'vehicle' || _object.objectType == 'missile') {
+					_object.body.velocity.x = 0;
+					_object.body.velocity.y = 0;
+					_object.state = VEHICLE_STATES.ICE;
+				}
+			}
+
 		} else {
 			// destroy it
 			Engine.particles.startExplosion(Engine.particles.smoke, _object.centerX, _object.centerY);
@@ -297,7 +310,12 @@ const PlayState = {
 			_object.kill();
 
 			// play sound - todo: enum
-			Engine.sounds["explode"].play();
+			if (_object.objectType == "building") {
+				Engine.sounds["building"].play();
+			} else {
+				Engine.sounds["explode"].play();
+			}
+			
 		}
 		
 	},
@@ -337,7 +355,15 @@ const PlayState = {
 			// change player state
 			this.player.state = PLAYER_STATES.FLAME;
 			this.player.powerupTime = Engine.levelTime + 6;
-			console.log(`new state: ${this.player.state}`)
+			break;
+		case 'ice-powerup':
+			// kill powerup
+			_powerup.kill();
+			// flash screen
+			Engine.game.camera.flash(0x0a313b, 850);
+			// change player state
+			this.player.state = PLAYER_STATES.ICE;
+			this.player.powerupTime = Engine.levelTime + 8;
 			break;
 		default:
 			// kill powerup
@@ -486,7 +512,8 @@ const PlayState = {
 
 			// Boss dead - Long Live Boss
 			this.boss.alive = false;
-			
+			this.boss.projectiles.removeAll(true);
+
 			// give player 100 life as reward. it won't last 
 			this.player.health = 100; 
 

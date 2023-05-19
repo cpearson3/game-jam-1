@@ -1328,12 +1328,14 @@
       Engine.game.load.image("bomb-powerup", Engine.BASE_URL + "assets/bomb-powerup.png");
       Engine.game.load.image("health-powerup", Engine.BASE_URL + "assets/health-powerup.png");
       Engine.game.load.image("flame-powerup", Engine.BASE_URL + "assets/flame-powerup.png");
+      Engine.game.load.image("ice-powerup", Engine.BASE_URL + "assets/ice-powerup.png");
       Engine.game.load.image("start", Engine.BASE_URL + "assets/start.png");
       let playerData = Engine.playerData;
       Engine.game.load.spritesheet("player", Engine.BASE_URL + playerData.sprite, playerData.frameWidth, playerData.frameHeight);
       Engine.game.load.spritesheet("boss", Engine.BASE_URL + "assets/boss.png", 483, 357);
       Engine.game.load.audio("bg-music", Engine.BASE_URL + "assets/sounds/bg-music.mp3");
       Engine.game.load.audio("boss-music", Engine.BASE_URL + "assets/sounds/boss-music.mp3");
+      Engine.game.load.audio("menu-music", Engine.BASE_URL + "assets/sounds/menu-music.mp3");
       Engine.game.load.audio("tank", Engine.BASE_URL + "assets/sounds/tank.mp3");
       Engine.game.load.audio("truck", Engine.BASE_URL + "assets/sounds/truck.mp3");
       Engine.game.load.audio("jet", Engine.BASE_URL + "assets/sounds/jet.mp3");
@@ -1345,6 +1347,7 @@
       Engine.game.load.audio("building", Engine.BASE_URL + "assets/sounds/building.mp3");
       Engine.game.load.audio("flame-powerup", Engine.BASE_URL + "assets/sounds/flame-powerup.mp3");
       Engine.game.load.audio("health-powerup", Engine.BASE_URL + "assets/sounds/health-powerup.mp3");
+      Engine.game.load.audio("ice-powerup", Engine.BASE_URL + "assets/sounds/ice-powerup.mp3");
       Engine.game.load.audio("bomb-powerup", Engine.BASE_URL + "assets/sounds/bomb-powerup.mp3");
       Engine.game.load.audio("player-fire", Engine.BASE_URL + "assets/sounds/player-fire.mp3");
       Engine.game.load.audio("player-hit", Engine.BASE_URL + "assets/sounds/player-hit.mp3");
@@ -1355,11 +1358,48 @@
   };
   var load_default = LoadState;
 
+  // src/utils.js
+  var range = (start, end) => {
+    const length = end - start;
+    return Array.from({ length }, (_, i) => start + i);
+  };
+  var getRandomItem = (_array) => {
+    return _array[Engine.game.rnd.integerInRange(0, _array.length - 1)];
+  };
+
   // src/states/menu.js
   var MenuState = {
     create: function() {
       Engine.game.camera.reset();
-      Engine.game.stage.backgroundColor = "#0a0401";
+      Engine.game.stage.backgroundColor = Engine.backgroundColor;
+      this.environment = Engine.game.add.tileSprite(0, 0, Engine.GAME_WIDTH, Engine.GAME_HEIGHT, "environment");
+      this.environment.fixedToCamera = true;
+      this.environment.autoScroll(-Engine.SCROLL_SPEED, 0);
+      this.environment.tint = 1118481;
+      this.sprite = Engine.game.add.sprite(Engine.GAME_WIDTH / 2, Engine.GAME_HEIGHT / 2, "player");
+      this.sprite.animations.add("left", range(0, Engine.playerData.frames / 2), Engine.playerData.frameRate, true);
+      this.sprite.animations.add("right", range(Engine.playerData.frames / 2, Engine.playerData.frames).reverse(), Engine.playerData.frameRate, true);
+      this.sprite.anchor.setTo(0.5, 0.5);
+      this.sprite.tint = 5053186;
+      this.sprite.alpha = 0.75;
+      this.sprite.scale.setTo(1.5, 1.5);
+      this.sprite.animations.play("right");
+      let fireStartX = 0;
+      let fireInterval = Engine.GAME_WIDTH / 3;
+      for (let i = 0; i < 4; i++) {
+        var emitter = Engine.game.add.emitter(fireStartX + i * fireInterval, Engine.GAME_HEIGHT, 500);
+        emitter.makeParticles("smoke");
+        emitter.setYSpeed(-600, 0);
+        emitter.setXSpeed(-500, 500);
+        emitter.gravity = 0;
+        emitter.setAlpha(0.9, 0, 3500);
+        emitter.setScale(5, 0, 5, 0, 3500);
+        emitter.start(false, 3500, Engine.game.rnd.integerInRange(100, 200));
+      }
+      this.music = Engine.game.add.audio("menu-music");
+      this.music.loop = true;
+      this.music.volume = 1;
+      this.music.play();
       let fontSize = Engine.device.type == "mobile" ? "30px" : "44px";
       var titleLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, 150, "GamesMeanEverything presents..", { font: `20px Monospace`, fill: "#ffffff" });
       titleLabel.anchor.setTo(0.5, 0.5);
@@ -1382,8 +1422,9 @@
     },
     start: function() {
       Engine.game.time.events.add(500, function() {
+        this.music.stop();
         Engine.game.state.start("play");
-      });
+      }, this);
     }
   };
   var menu_default = MenuState;
@@ -1468,20 +1509,11 @@
     }
   };
 
-  // src/utils.js
-  var range = (start, end) => {
-    const length = end - start;
-    return Array.from({ length }, (_, i) => start + i);
-  };
-  var getRandomItem = (_array) => {
-    return _array[Engine.game.rnd.integerInRange(0, _array.length - 1)];
-  };
-
   // src/objects/player.js
   var PLAYER_STATES = {
     NORMAL: 0,
     FLAME: 1,
-    LAZER: 2
+    ICE: 2
     // TBD
   };
   var Player = class {
@@ -1525,10 +1557,16 @@
       this.sprite.animations.play(this.facing);
     }
     update(_input) {
-      if (this.state == PLAYER_STATES.FLAME) {
-        this.sprite.tint = 14383937;
-      } else {
-        this.sprite.tint = 16777215;
+      switch (this.state) {
+        case PLAYER_STATES.FLAME:
+          this.sprite.tint = 14383937;
+          break;
+        case PLAYER_STATES.ICE:
+          this.sprite.tint = 52735;
+          break;
+        default:
+          this.sprite.tint = 16777215;
+          break;
       }
       if (this.health < 100 && this.alive) {
         this.health += 0.01;
@@ -1571,10 +1609,18 @@
             projectile.velocity = 150;
             projectile.rotation = Engine.game.physics.arcade.angleToPointer(projectile);
             Engine.game.physics.arcade.velocityFromAngle(projectile.angle, 750, projectile.body.velocity);
-            if (this.state == PLAYER_STATES.FLAME) {
-              projectile.scale.setTo(2.5);
-            } else {
-              projectile.scale.setTo(1);
+            switch (this.state) {
+              case PLAYER_STATES.FLAME:
+                projectile.scale.setTo(2.5);
+                break;
+              case PLAYER_STATES.ICE:
+                projectile.scale.setTo(1);
+                projectile.tint = 52735;
+                break;
+              default:
+                projectile.scale.setTo(1);
+                projectile.tint = 16777215;
+                break;
             }
           }
         }
@@ -1697,6 +1743,10 @@
       fireRate: 150
     }
   ];
+  var VEHICLE_STATES = {
+    NORMAL: 0,
+    ICE: 1
+  };
   var Vehicles = class {
     constructor() {
       this.group = Engine.game.add.group();
@@ -1747,6 +1797,7 @@
       vehicle.config = vehicleType;
       vehicle.objectType = "vehicle";
       vehicle.nextFire = Engine.game.time.now + vehicleType.fireRate;
+      vehicle.state = VEHICLE_STATES.NORMAL;
       return vehicle;
     }
     update(player) {
@@ -1767,7 +1818,7 @@
         }
       }
       this.group.forEachAlive(function(vehicle) {
-        if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0 && vehicle.inCamera) {
+        if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0 && vehicle.inCamera && vehicle.state == VEHICLE_STATES.NORMAL) {
           this.fire(vehicle, player);
         }
       }, this);
@@ -1801,6 +1852,13 @@
     },
     {
       sprite: "flame-powerup",
+      height: 64,
+      width: 64,
+      score: 500,
+      health: 0
+    },
+    {
+      sprite: "ice-powerup",
       height: 64,
       width: 64,
       score: 500,
@@ -1840,7 +1898,7 @@
         } else if (Engine.score < 3e4) {
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(6, 7);
         } else {
-          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3, 5);
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2, 4);
         }
       }
     }
@@ -1894,7 +1952,7 @@
       missle.body.velocity.y = missileType.sprite == "missile-vertical" ? missileType.speed : 0;
       missle.health = missileType.health;
       missle.config = missileType;
-      missle.objectType = "missle";
+      missle.objectType = "missile";
       Engine.sounds["missile"].play();
       return missle;
     }
@@ -2053,14 +2111,15 @@
       };
       this.music = Engine.game.add.audio("bg-music");
       this.music.loop = true;
-      this.music.volume = 0.8;
+      this.music.volume = 0.7;
       this.music.play();
       this.bossMusic = Engine.game.add.audio("boss-music");
       this.bossMusic.loop = true;
-      this.bossMusic.volume = 0.9;
+      this.bossMusic.volume = 0.7;
       Engine.sounds["health-powerup"] = Engine.game.add.audio("health-powerup");
       Engine.sounds["flame-powerup"] = Engine.game.add.audio("flame-powerup");
       Engine.sounds["bomb-powerup"] = Engine.game.add.audio("bomb-powerup");
+      Engine.sounds["ice-powerup"] = Engine.game.add.audio("ice-powerup");
       Engine.sounds["jet"] = Engine.game.add.audio("jet");
       Engine.sounds["truck"] = Engine.game.add.audio("truck");
       Engine.sounds["tank"] = Engine.game.add.audio("tank");
@@ -2101,7 +2160,7 @@
       }
     },
     update: function() {
-      if (Engine.score > 500 && this.boss.health > 0) {
+      if (Engine.score > 15e3 && this.boss.health > 0) {
         Engine.gameMode = Engine.GAME_MODES.BOSS;
       }
       if (Engine.gameMode == Engine.GAME_MODES.RUN) {
@@ -2117,7 +2176,7 @@
         this.buildings.update();
         this.powerups.update();
         this.missiles.update();
-        if (this.player.state == PLAYER_STATES.FLAME && Engine.levelTime > this.player.powerupTime) {
+        if (this.player.state !== PLAYER_STATES.NORMAL && Engine.levelTime > this.player.powerupTime) {
           this.player.state = PLAYER_STATES.NORMAL;
           console.log(`new state: ${this.player.state}`);
         }
@@ -2171,10 +2230,18 @@
       _object.health -= 0.333;
       if (_object.health > 0) {
         Engine.particles.startSmallExplosion(Engine.particles.smallSmoke, _projectile.centerX + 50, _projectile.centerY);
-        if (this.player.state == PLAYER_STATES.NORMAL) {
+        if (this.player.state != PLAYER_STATES.FLAME) {
           _projectile.kill();
         }
         Engine.score += 2;
+        if (this.player.state == PLAYER_STATES.ICE) {
+          _object.tint = 52735;
+          if (_object.objectType == "vehicle" || _object.objectType == "missile") {
+            _object.body.velocity.x = 0;
+            _object.body.velocity.y = 0;
+            _object.state = VEHICLE_STATES.ICE;
+          }
+        }
       } else {
         Engine.particles.startExplosion(Engine.particles.smoke, _object.centerX, _object.centerY);
         if (_object.objectType == "building") {
@@ -2185,7 +2252,11 @@
         }
         _projectile.kill();
         _object.kill();
-        Engine.sounds["explode"].play();
+        if (_object.objectType == "building") {
+          Engine.sounds["building"].play();
+        } else {
+          Engine.sounds["explode"].play();
+        }
       }
     },
     // Handle power up collisions
@@ -2208,7 +2279,12 @@
           Engine.game.camera.flash(9109504, 850);
           this.player.state = PLAYER_STATES.FLAME;
           this.player.powerupTime = Engine.levelTime + 6;
-          console.log(`new state: ${this.player.state}`);
+          break;
+        case "ice-powerup":
+          _powerup.kill();
+          Engine.game.camera.flash(667963, 850);
+          this.player.state = PLAYER_STATES.ICE;
+          this.player.powerupTime = Engine.levelTime + 8;
           break;
         default:
           _powerup.kill();
@@ -2303,6 +2379,7 @@
         _projectile.kill();
         _object.kill();
         this.boss.alive = false;
+        this.boss.projectiles.removeAll(true);
         this.player.health = 100;
         Engine.sounds["boss-end"].play();
         this.bossMusic.stop();
@@ -2396,12 +2473,12 @@
   }
 
   // src/app.js
-  function startGame() {
+  window.onload = function() {
+    const gameEl = document.querySelector("#game");
+    gameEl.oncontextmenu = () => false;
     runGame({
-      // backgroundColor: "#a9d8e8",
       backgroundColor: "#1c0000",
       backgroundImage: "assets/environment.png",
-      // music: "/assets/music/green-zone.mp3",
       playerData: {
         "name": "OG MetaBoy #8847",
         "sprite": "assets/player-base.png",
@@ -2415,12 +2492,5 @@
         "jumpFactor": 0.983
       }
     });
-    var gameEl = document.getElementById("game");
-    if (gameEl) {
-      gameEl.focus();
-    }
-  }
-  window.onload = function() {
-    startGame();
   };
 })();

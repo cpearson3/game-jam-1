@@ -1,7 +1,7 @@
 
 import { distanceActive } from "../utils";
 
-const VEHICLE_TYPES = [
+export const VEHICLE_TYPES = [
 	{
         sprite: "truck",
         height: 63,
@@ -39,6 +39,11 @@ const VEHICLE_TYPES = [
 		fireRate: 150
 	}
 ]
+
+export const VEHICLE_STATES = {
+	NORMAL: 0,
+	ICE: 1
+}
 
 export default class Vehicles {
 	constructor() {
@@ -105,7 +110,7 @@ export default class Vehicles {
 		vehicle.config = vehicleType;
 		vehicle.objectType = "vehicle";
 		vehicle.nextFire = Engine.game.time.now + vehicleType.fireRate;
-
+		vehicle.state = VEHICLE_STATES.NORMAL;
 		return vehicle;
     }
 
@@ -137,7 +142,7 @@ export default class Vehicles {
 
 		this.group.forEachAlive(function(vehicle) {
 			// fire
-			if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0 && vehicle.inCamera) {
+			if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0 && vehicle.inCamera && vehicle.state == VEHICLE_STATES.NORMAL) {
 				this.fire(vehicle, player);
 			}
 		}, this)

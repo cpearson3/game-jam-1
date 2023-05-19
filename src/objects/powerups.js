@@ -19,6 +19,13 @@ const POWERUP_TYPES = [
         width: 64,
         score: 500,
         health: 0
+    },
+    {
+        sprite: "ice-powerup",
+        height: 64,
+        width: 64,
+        score: 500,
+        health: 0
     }
 ]
 
@@ -64,7 +71,7 @@ export default class Powerups {
             } else if (Engine.score < 30000) {
                 this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(6,7);
             } else {
-                this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3,5);
+                this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2,4);
             }
 			
 		} 

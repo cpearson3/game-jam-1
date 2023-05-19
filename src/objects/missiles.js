@@ -65,7 +65,7 @@ export default class Missiles {
         missle.body.velocity.y= missileType.sprite == "missile-vertical" ? missileType.speed : 0;
         missle.health = missileType.health;
 		missle.config = missileType;
-		missle.objectType = "missle";
+		missle.objectType = "missile";
 
         // play sound - todo: enum
         Engine.sounds["missile"].play();

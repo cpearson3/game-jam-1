@@ -40,6 +40,7 @@ const LoadState = {
 		Engine.game.load.image('bomb-powerup', Engine.BASE_URL+'assets/bomb-powerup.png');
 		Engine.game.load.image('health-powerup', Engine.BASE_URL+'assets/health-powerup.png');
 		Engine.game.load.image('flame-powerup', Engine.BASE_URL+'assets/flame-powerup.png');
+		Engine.game.load.image('ice-powerup', Engine.BASE_URL+'assets/ice-powerup.png');
 		// UI
 		Engine.game.load.image('start', Engine.BASE_URL+'assets/start.png');
 		
@@ -51,6 +52,7 @@ const LoadState = {
 		// Load sounds
 		Engine.game.load.audio('bg-music', Engine.BASE_URL+'assets/sounds/bg-music.mp3');
 		Engine.game.load.audio('boss-music', Engine.BASE_URL+'assets/sounds/boss-music.mp3');
+		Engine.game.load.audio('menu-music', Engine.BASE_URL+'assets/sounds/menu-music.mp3');
 		Engine.game.load.audio('tank', Engine.BASE_URL+'assets/sounds/tank.mp3');
 		Engine.game.load.audio('truck', Engine.BASE_URL+'assets/sounds/truck.mp3');
 		Engine.game.load.audio('jet', Engine.BASE_URL+'assets/sounds/jet.mp3');
@@ -62,6 +64,7 @@ const LoadState = {
 		Engine.game.load.audio('building', Engine.BASE_URL+'assets/sounds/building.mp3');
 		Engine.game.load.audio('flame-powerup', Engine.BASE_URL+'assets/sounds/flame-powerup.mp3');
 		Engine.game.load.audio('health-powerup', Engine.BASE_URL+'assets/sounds/health-powerup.mp3');
+		Engine.game.load.audio('ice-powerup', Engine.BASE_URL+'assets/sounds/ice-powerup.mp3');
 		Engine.game.load.audio('bomb-powerup', Engine.BASE_URL+'assets/sounds/bomb-powerup.mp3');
 		Engine.game.load.audio('player-fire', Engine.BASE_URL+'assets/sounds/player-fire.mp3');
 		Engine.game.load.audio('player-hit', Engine.BASE_URL+'assets/sounds/player-hit.mp3');
