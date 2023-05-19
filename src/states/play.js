@@ -58,13 +58,13 @@ const PlayState = {
 		this.drawHealthBar(this.player);
 		
 		// create score text
-		this.gameText = Engine.game.add.text(12, 12, '0', { font: "16px Monospace", fill: "#ffffff", align: "left" });
+		this.gameText = Engine.game.add.text(12, 12, '0', { font: "22px VT323", fill: "#ffffff", align: "left" });
 		this.gameText.fixedToCamera = true;
 
-		this.scoreText = Engine.game.add.text( Engine.game.camera.width - 160, 10, '0', { font: "18px Monospace", fill: "#ffffff", align: "left" });
+		this.scoreText = Engine.game.add.text( Engine.game.camera.width - 160, 10, '0', { font: "22px VT323", fill: "#ffffff", align: "left" });
 		this.scoreText.fixedToCamera = true;
 
-		this.bossText = Engine.game.add.text(12, 60, '0', { font: "16px Monospace", fill: "#ffffff", align: "left" });
+		this.bossText = Engine.game.add.text(12, 60, '0', { font: "22px VT323", fill: "#ffffff", align: "left" });
 		this.bossText.fixedToCamera = true;
 
 		// create cursor keys (up down left right)
@@ -177,7 +177,6 @@ const PlayState = {
 			// check powerup time
 			if (this.player.state !== PLAYER_STATES.NORMAL && Engine.levelTime > this.player.powerupTime) {
 				this.player.state = PLAYER_STATES.NORMAL;
-				console.log(`new state: ${this.player.state}`)
 			}
 			
 		} else if (Engine.gameMode == Engine.GAME_MODES.BOSS) {
@@ -487,10 +486,8 @@ const PlayState = {
 	hitProjectileBoss: function(_object, _projectile) {
 		// deduct damage (TODO: make weapon types)
 		this.boss.health -= 0.333;
-		console.log(this.boss.health)
 
 		if (this.boss.health > 0) {
-			console.log('in here')
 			// small explosion
 			Engine.particles.startSmallExplosion(Engine.particles.smallSmoke, _projectile.centerX + 50, _projectile.centerY);
 			

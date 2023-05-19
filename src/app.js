@@ -1,3 +1,4 @@
+import WebFont from 'webfontloader';
 import { runGame } from "./game";
 
 window.onload = function() {
@@ -5,6 +6,13 @@ window.onload = function() {
     const gameEl = document.querySelector('#game');
     // // Disable contextmenu
     gameEl.oncontextmenu = () => false;
+
+    // load font for in-game use
+    WebFont.load({
+        google: {
+          families: ['VT323']
+        }
+    });
 
     // Run game with chosen game options                
     runGame({
