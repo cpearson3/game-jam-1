@@ -39,34 +39,32 @@ const LoadState = {
 		// Power up
 		Engine.game.load.image('bomb-powerup', Engine.BASE_URL+'assets/bomb-powerup.png');
 		Engine.game.load.image('health-powerup', Engine.BASE_URL+'assets/health-powerup.png');
+		Engine.game.load.image('flame-powerup', Engine.BASE_URL+'assets/flame-powerup.png');
 		// UI
 		Engine.game.load.image('start', Engine.BASE_URL+'assets/start.png');
 		
 		// Load spritesheets
 		let playerData = Engine.playerData;
 		Engine.game.load.spritesheet('player', Engine.BASE_URL+playerData.sprite, playerData.frameWidth, playerData.frameHeight);
-		Engine.game.load.spritesheet('boss', Engine.BASE_URL+'assets/boss.png', 483, 483);
-		// create graphics textures
-		Engine.textures = {};
-		let projectileGraphic = this.make.graphics({x: 0, y: 0, add: false});
-		projectileGraphic.beginFill(0xb8c4d4);
-		projectileGraphic.drawCircle(0, 0, 75);
-		projectileGraphic.endFill();
-		
-		Engine.textures.projectile = projectileGraphic.generateTexture();
+		Engine.game.load.spritesheet('boss', Engine.BASE_URL+'assets/boss.png', 483, 357);
 
-		// Sound when the player jumps
-		// Engine.game.load.audio('jump', Engine.BASE_URL+'assets/sounds/jump.mp3');
-		// Sound when the player dies
-		// Engine.game.load.audio('dead', Engine.BASE_URL+'assets/sounds/dead.mp3');
-		// Engine.game.load.audio('crash', Engine.BASE_URL+'assets/sounds/crash.mp3');
-		// Engine.game.load.audio('zombie1', Engine.BASE_URL+'assets/sounds/zombie.mp3');
-		// Engine.game.load.audio('zombie2', Engine.BASE_URL+'assets/sounds/zombie-2.mp3');
-		// Engine.game.load.audio('zombie3', Engine.BASE_URL+'assets/sounds/zombie-3.mp3');
-		// Engine.game.load.audio('ghost', Engine.BASE_URL+'assets/sounds/seeking.mp3');
-
-		// Load the music
-		// Engine.game.load.audio('playMusic', Engine.backgroundMusic);
+		// Load sounds
+		Engine.game.load.audio('bg-music', Engine.BASE_URL+'assets/sounds/bg-music.mp3');
+		Engine.game.load.audio('boss-music', Engine.BASE_URL+'assets/sounds/boss-music.mp3');
+		Engine.game.load.audio('tank', Engine.BASE_URL+'assets/sounds/tank.mp3');
+		Engine.game.load.audio('truck', Engine.BASE_URL+'assets/sounds/truck.mp3');
+		Engine.game.load.audio('jet', Engine.BASE_URL+'assets/sounds/jet.mp3');
+		Engine.game.load.audio('chopper', Engine.BASE_URL+'assets/sounds/chopper.mp3');
+		Engine.game.load.audio('missile', Engine.BASE_URL+'assets/sounds/missile.mp3');
+		Engine.game.load.audio('boss', Engine.BASE_URL+'assets/sounds/boss.mp3');
+		Engine.game.load.audio('boss-end', Engine.BASE_URL+'assets/sounds/boss-end.mp3');
+		Engine.game.load.audio('explode', Engine.BASE_URL+'assets/sounds/explode.mp3');
+		Engine.game.load.audio('building', Engine.BASE_URL+'assets/sounds/building.mp3');
+		Engine.game.load.audio('flame-powerup', Engine.BASE_URL+'assets/sounds/flame-powerup.mp3');
+		Engine.game.load.audio('health-powerup', Engine.BASE_URL+'assets/sounds/health-powerup.mp3');
+		Engine.game.load.audio('bomb-powerup', Engine.BASE_URL+'assets/sounds/bomb-powerup.mp3');
+		Engine.game.load.audio('player-fire', Engine.BASE_URL+'assets/sounds/player-fire.mp3');
+		Engine.game.load.audio('player-hit', Engine.BASE_URL+'assets/sounds/player-hit.mp3');
 	},
 
 	create: function() {

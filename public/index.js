@@ -1327,16 +1327,27 @@
       Engine.game.load.image("missile-vertical", Engine.BASE_URL + "assets/missile-vertical.png");
       Engine.game.load.image("bomb-powerup", Engine.BASE_URL + "assets/bomb-powerup.png");
       Engine.game.load.image("health-powerup", Engine.BASE_URL + "assets/health-powerup.png");
+      Engine.game.load.image("flame-powerup", Engine.BASE_URL + "assets/flame-powerup.png");
       Engine.game.load.image("start", Engine.BASE_URL + "assets/start.png");
       let playerData = Engine.playerData;
       Engine.game.load.spritesheet("player", Engine.BASE_URL + playerData.sprite, playerData.frameWidth, playerData.frameHeight);
-      Engine.game.load.spritesheet("boss", Engine.BASE_URL + "assets/boss.png", 483, 483);
-      Engine.textures = {};
-      let projectileGraphic = this.make.graphics({ x: 0, y: 0, add: false });
-      projectileGraphic.beginFill(12109012);
-      projectileGraphic.drawCircle(0, 0, 75);
-      projectileGraphic.endFill();
-      Engine.textures.projectile = projectileGraphic.generateTexture();
+      Engine.game.load.spritesheet("boss", Engine.BASE_URL + "assets/boss.png", 483, 357);
+      Engine.game.load.audio("bg-music", Engine.BASE_URL + "assets/sounds/bg-music.mp3");
+      Engine.game.load.audio("boss-music", Engine.BASE_URL + "assets/sounds/boss-music.mp3");
+      Engine.game.load.audio("tank", Engine.BASE_URL + "assets/sounds/tank.mp3");
+      Engine.game.load.audio("truck", Engine.BASE_URL + "assets/sounds/truck.mp3");
+      Engine.game.load.audio("jet", Engine.BASE_URL + "assets/sounds/jet.mp3");
+      Engine.game.load.audio("chopper", Engine.BASE_URL + "assets/sounds/chopper.mp3");
+      Engine.game.load.audio("missile", Engine.BASE_URL + "assets/sounds/missile.mp3");
+      Engine.game.load.audio("boss", Engine.BASE_URL + "assets/sounds/boss.mp3");
+      Engine.game.load.audio("boss-end", Engine.BASE_URL + "assets/sounds/boss-end.mp3");
+      Engine.game.load.audio("explode", Engine.BASE_URL + "assets/sounds/explode.mp3");
+      Engine.game.load.audio("building", Engine.BASE_URL + "assets/sounds/building.mp3");
+      Engine.game.load.audio("flame-powerup", Engine.BASE_URL + "assets/sounds/flame-powerup.mp3");
+      Engine.game.load.audio("health-powerup", Engine.BASE_URL + "assets/sounds/health-powerup.mp3");
+      Engine.game.load.audio("bomb-powerup", Engine.BASE_URL + "assets/sounds/bomb-powerup.mp3");
+      Engine.game.load.audio("player-fire", Engine.BASE_URL + "assets/sounds/player-fire.mp3");
+      Engine.game.load.audio("player-hit", Engine.BASE_URL + "assets/sounds/player-hit.mp3");
     },
     create: function() {
       Engine.game.state.start("menu");
@@ -1363,7 +1374,7 @@
       startButton.input.useHandCursor = true;
       startButton.events.onInputUp.add(this.start, this);
       let instructionsY = startY + 100;
-      var instructionsLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, instructionsY, `A + S Moves, SPACE Jumps, MOUSE Shoots `, { font: `16px Monospace`, fill: "#ffffff" });
+      var instructionsLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, instructionsY, `A Left. D Right. SPACE Jumps. MOUSE Shoots `, { font: `16px Monospace`, fill: "#ffffff" });
       instructionsLabel.anchor.setTo(0.5, 0.5);
       Engine.game.add.tween(startButton).to({ alpha: 1 }, 1e3, Phaser.Easing.Linear.None, true, 0.75, 500, true);
       var startKey = Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
@@ -1382,11 +1393,11 @@
     constructor() {
       this.splat = Engine.game.add.emitter(0, 0, 250);
       this.splat.makeParticles("pixel");
-      this.splat.setYSpeed(-100, 25);
-      this.splat.setXSpeed(-75, 75);
+      this.splat.setYSpeed(-500, 500);
+      this.splat.setXSpeed(-500, 500);
       this.splat.gravity = Engine.gravity / 2;
-      this.splat.setAlpha(0.8, 0, 1e3);
-      this.splat.setScale(1.15, 0.5, 1.15, 0.5, 1e3);
+      this.splat.setAlpha(0.6, 0, 1e3);
+      this.splat.setScale(2.15, 0.5, 2.15, 0.5, 1e3);
       this.smoke = Engine.game.add.emitter(0, 0, 125);
       this.smoke.makeParticles("smoke");
       this.smoke.setYSpeed(-250, 250);
@@ -1422,7 +1433,7 @@
       this.stars.setYSpeed(-300, 300);
       this.stars.setXSpeed(-300, 300);
       this.stars.setAlpha(1, 0, 2e3);
-      this.stars.setScale(0.25, 1.5, 0.25, 1.5, 2e3);
+      this.stars.setScale(0.25, 2, 0.25, 2, 2e3);
     }
     startExplosion(emitter, x, y) {
       emitter.x = x;
@@ -1467,6 +1478,12 @@
   };
 
   // src/objects/player.js
+  var PLAYER_STATES = {
+    NORMAL: 0,
+    FLAME: 1,
+    LAZER: 2
+    // TBD
+  };
   var Player = class {
     constructor() {
       this.startY = 0;
@@ -1475,12 +1492,14 @@
       this.sprite.animations.add("right", range(Engine.playerData.frames / 2, Engine.playerData.frames).reverse(), Engine.playerData.frameRate, true);
       this.sprite.anchor.setTo(0.5, 0.5);
       Engine.game.physics.arcade.enable(this.sprite);
-      this.sprite.body.gravity.y = 2500;
+      this.sprite.body.gravity.y = Engine.gravity;
       this.sprite.body.collideWorldBounds = true;
       this.health = 100;
       this.nextFire = 0;
       this.fireRate = 65;
       this.alive = true;
+      this.state = PLAYER_STATES.NORMAL;
+      this.powerupTime = 0;
       this.facing = "right";
       this.moving = false;
       this.speed = 306;
@@ -1496,10 +1515,39 @@
       this.projectiles.setAll("checkWorldBounds", true);
     }
     isGrounded() {
-      return this.sprite.body.blocked.down || this.sprite.body.touching.down;
+      return this.sprite.y + this.sprite.height / 2 > Engine.GAME_HEIGHT - 10;
+    }
+    move(direction) {
+      let directionFactor = direction == "left" ? -1 : 1;
+      this.sprite.body.velocity.x = this.speed * directionFactor;
+      this.facing = direction;
+      this.moving = true;
+      this.sprite.animations.play(this.facing);
+    }
+    update(_input) {
+      if (this.state == PLAYER_STATES.FLAME) {
+        this.sprite.tint = 14383937;
+      } else {
+        this.sprite.tint = 16777215;
+      }
+      if (this.health < 100 && this.alive) {
+        this.health += 0.01;
+      }
+      if (_input.left.isDown) {
+        this.move("left");
+      } else if (_input.right.isDown) {
+        this.move("right");
+      }
+      if (!this.moving) {
+        this.sprite.body.velocity.x = 0;
+      }
+      this.moving = false;
+      if (_input.jump.isDown) {
+        this.jump();
+      }
     }
     jump() {
-      if (this.sprite.y + this.sprite.height / 2 > Engine.GAME_HEIGHT - 10 && this.alive) {
+      if (this.isGrounded() && this.alive) {
         this.sprite.body.velocity.y = this.jumpForce;
       }
     }
@@ -1523,8 +1571,14 @@
             projectile.velocity = 150;
             projectile.rotation = Engine.game.physics.arcade.angleToPointer(projectile);
             Engine.game.physics.arcade.velocityFromAngle(projectile.angle, 750, projectile.body.velocity);
+            if (this.state == PLAYER_STATES.FLAME) {
+              projectile.scale.setTo(2.5);
+            } else {
+              projectile.scale.setTo(1);
+            }
           }
         }
+        Engine.sounds["player-fire"].play();
       }
     }
     updateProjectiles() {
@@ -1610,25 +1664,25 @@
       sprite: "truck",
       height: 63,
       width: 128,
-      health: 2,
-      speed: 200,
+      health: 8,
+      speed: 150,
       damage: 1,
-      fireRate: 400
+      fireRate: 300
     },
     {
       sprite: "tank",
       height: 74,
       width: 128,
-      health: 6,
-      speed: 100,
+      health: 12,
+      speed: 60,
       damage: 5,
-      fireRate: 800
+      fireRate: 600
     },
     {
       sprite: "chopper",
       height: 51,
       width: 175,
-      health: 2,
+      health: 4,
       speed: -250,
       damage: 5,
       fireRate: 200
@@ -1637,7 +1691,7 @@
       sprite: "jet",
       height: 67,
       width: 163,
-      health: 2,
+      health: 4,
       speed: 500,
       damage: 5,
       fireRate: 150
@@ -1660,19 +1714,24 @@
       this.projectiles.setAll("checkWorldBounds", true);
     }
     spawn() {
-      const vehicleType = VEHICLE_TYPES[Engine.game.rnd.integerInRange(0, VEHICLE_TYPES.length - 1)];
+      let vehicleType;
+      if (Engine.gameMode == Engine.GAME_MODES.RUN) {
+        vehicleType = VEHICLE_TYPES[Engine.game.rnd.integerInRange(0, VEHICLE_TYPES.length - 1)];
+      } else {
+        vehicleType = VEHICLE_TYPES[Engine.game.rnd.integerInRange(2, 3)];
+      }
       let vx, vy;
       switch (vehicleType.sprite) {
         case "chopper":
-          vx = Engine.GAME_WIDTH - 1;
+          vx = Engine.GAME_WIDTH + vehicleType.width / 2;
           vy = Engine.GAME_HEIGHT * 0.125;
           break;
         case "jet":
-          vx = 1;
+          vx = 0 - vehicleType.width / 2;
           vy = Engine.GAME_HEIGHT * 0.08;
           break;
         default:
-          vx = 1;
+          vx = 0 - vehicleType.width / 2;
           vy = Engine.GAME_HEIGHT - vehicleType.height - 20;
           break;
       }
@@ -1687,33 +1746,40 @@
       vehicle.health = vehicleType.health;
       vehicle.config = vehicleType;
       vehicle.objectType = "vehicle";
-      vehicle.nextFire = 0;
+      vehicle.nextFire = Engine.game.time.now + vehicleType.fireRate;
       return vehicle;
     }
-    update() {
+    update(player) {
       if (this.spawnTime < Engine.levelTime && Engine.score > 450) {
         this.spawn();
-        if (Engine.score < 5e3) {
-          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3, 4);
-        } else if (Engine.score < 1e4) {
-          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2, 4);
-        } else {
-          this.spawnTime = Engine.levelTime + 2;
+        if (Engine.gameMode == Engine.GAME_MODES.RUN) {
+          if (Engine.score < 4e3) {
+            this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3, 4);
+          } else if (Engine.score < 8e3) {
+            this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2, 4);
+          } else if (Engine.score < 3e4) {
+            this.spawnTime = Engine.levelTime + 2;
+          } else {
+            this.spawnTime = Engine.levelTime + 1;
+          }
+        } else if (Engine.gameMode == Engine.GAME_MODES.BOSS) {
+          this.spawnTime = Engine.levelTime + 5;
         }
       }
       this.group.forEachAlive(function(vehicle) {
-        if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0) {
-          this.fire(vehicle);
+        if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0 && vehicle.inCamera) {
+          this.fire(vehicle, player);
         }
       }, this);
     }
-    fire(vehicle) {
+    fire(vehicle, player) {
       let projectile = this.projectiles.getFirstExists(false);
       let px = vehicle.centerX;
       let py = vehicle.centerY;
       projectile.reset(px, py);
-      Engine.game.physics.arcade.moveToObject(projectile, Engine.player.sprite, 750);
+      Engine.game.physics.arcade.moveToObject(projectile, player.sprite, 750);
       vehicle.nextFire = Engine.game.time.now + vehicle.config.fireRate;
+      Engine.sounds[vehicle.config.sprite].play();
     }
   };
 
@@ -1732,6 +1798,13 @@
       width: 64,
       score: 500,
       health: 25
+    },
+    {
+      sprite: "flame-powerup",
+      height: 64,
+      width: 64,
+      score: 500,
+      health: 0
     }
   ];
   var Powerups = class {
@@ -1752,20 +1825,22 @@
       );
       powerup.body.gravity.y = 0;
       powerup.body.immovable = true;
-      powerup.body.velocity.y = 450;
+      powerup.body.velocity.y = 350;
       powerup.objectType = "powerup";
       powerup.config = powerupType;
       return powerup;
     }
     update() {
-      if (this.spawnTime < Engine.levelTime && Engine.score > 3500) {
+      if (this.spawnTime < Engine.levelTime && Engine.score > 4e3) {
         this.spawn();
-        if (Engine.score < 9e3) {
+        if (Engine.score < 8e3) {
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(11, 13);
-        } else if (Engine.score < 15e3) {
-          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(7, 9);
+        } else if (Engine.score < 12e3) {
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(8, 10);
+        } else if (Engine.score < 3e4) {
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(6, 7);
         } else {
-          this.spawnTime = Engine.levelTime + 5;
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3, 5);
         }
       }
     }
@@ -1802,11 +1877,11 @@
       const missileType = getRandomItem(MISSLE_TYPES);
       let vx, vy;
       if (missileType.sprite == "missile") {
-        vx = 0;
+        vx = 0 - missileType.width / 2;
         vy = Engine.GAME_HEIGHT * (Engine.game.rnd.integerInRange(35, 65) / 100);
       } else {
-        vx = Engine.GAME_WIDTH * (Engine.game.rnd.integerInRange(35, 95) / 100);
-        vy = 0;
+        vx = Engine.GAME_WIDTH * (Engine.game.rnd.integerInRange(33, 85) / 100);
+        vy = 0 - missileType.height / 2;
       }
       let missle = this.group.create(
         vx,
@@ -1820,17 +1895,120 @@
       missle.health = missileType.health;
       missle.config = missileType;
       missle.objectType = "missle";
+      Engine.sounds["missile"].play();
       return missle;
     }
     update() {
-      if (this.spawnTime < Engine.levelTime && Engine.score > 5e3) {
+      if (this.spawnTime < Engine.levelTime && Engine.score > 4e3) {
         this.spawn();
-        if (Engine.score < 1e4) {
+        if (Engine.score < 8e3) {
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(6, 8);
-        } else if (Engine.score < 15e3) {
-          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(4, 5);
+        } else if (Engine.score < 12e3) {
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(5, 6);
+        } else if (Engine.score < 3e4) {
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3, 4);
         } else {
-          this.spawnTime = Engine.levelTime + 2;
+          this.spawnTime = Engine.levelTime + 1;
+        }
+      }
+    }
+  };
+
+  // src/objects/boss.js
+  var BOSS_DATA = {
+    sprite: "boss",
+    health: 100,
+    frames: 8,
+    frameRate: 8,
+    frameWidth: 483,
+    frameHeight: 351,
+    projectileHealth: 9,
+    speed: 75,
+    damage: 0.3
+  };
+  var Boss = class {
+    constructor() {
+      this.health = BOSS_DATA.health;
+      this.totalHealth = BOSS_DATA.health;
+      this.highFireRate = 2250;
+      this.midFireRate = 1750;
+      this.lowFireRate = 1350;
+      this.projectileSpeed = 375;
+      this.alive = false;
+      this.hasSpawned = false;
+      this.idle = true;
+    }
+    spawn() {
+      this.startY = 1;
+      this.startX = Engine.GAME_WIDTH - BOSS_DATA.frameWidth / 2;
+      this.sprite = Engine.game.add.sprite(this.startX, this.startY, "boss");
+      this.sprite.animations.add("fight", range(0, BOSS_DATA.frames), BOSS_DATA.frameRate, true);
+      this.sprite.animations.play("fight");
+      this.sprite.anchor.setTo(0.5, 0.5);
+      Engine.game.physics.arcade.enable(this.sprite);
+      this.sprite.body.gravity.y = Engine.gravity;
+      this.sprite.body.collideWorldBounds = true;
+      this.nextFire = Engine.game.time.now + 350;
+      this.jumpForce = -1400;
+      this.facing = "right";
+      this.moving = false;
+      this.speed = BOSS_DATA.speed;
+      this.damage = BOSS_DATA.damage;
+      this.projectiles = Engine.game.add.group();
+      this.projectiles.enableBody = true;
+      this.projectiles.physicsBodyType = Phaser.Physics.ARCADE;
+      this.projectiles.createMultiple(20, "blue-flame", 0, false);
+      this.projectiles.setAll("anchor.x", 0.5);
+      this.projectiles.setAll("anchor.y", 0.5);
+      this.projectiles.setAll("outOfBoundsKill", true);
+      this.projectiles.setAll("checkWorldBounds", true);
+      this.sprite.alpha = 0;
+      let fadeInTween = Engine.game.add.tween(this.sprite).to({ alpha: 1 }, 1e3, Phaser.Easing.Linear.None, true, 0);
+      fadeInTween.onComplete.addOnce(() => {
+        this.alive = true;
+      }, this);
+    }
+    // Update boss actions
+    update(player) {
+      if (this.alive) {
+        this.jump();
+        this.fire(player);
+        let rndFactor = Engine.game.rnd.integerInRange(0, 99) / 100;
+        if (this.sprite.x >= this.startX) {
+          this.sprite.body.velocity.x = (-1 - rndFactor) * this.speed;
+        } else if (this.sprite.x < Engine.GAME_WIDTH * 0.7) {
+          this.sprite.body.velocity.x = (1 + rndFactor) * this.speed;
+        }
+        if (this.health < 100 && this.alive) {
+          this.health += 0.02;
+        }
+      }
+    }
+    isGrounded() {
+      return this.sprite.y + this.sprite.height / 2 > Engine.GAME_HEIGHT - 10;
+    }
+    jump() {
+      if (this.isGrounded()) {
+        this.sprite.body.velocity.y = this.jumpForce;
+      }
+    }
+    fire(player) {
+      if (Engine.game.time.now > this.nextFire && this.projectiles.countDead() > 0) {
+        let nF;
+        if (this.health < 25) {
+          nF = Engine.game.rnd.integerInRange(this.lowFireRate, this.midFireRate);
+        } else {
+          nF = Engine.game.rnd.integerInRange(this.midFireRate, this.highFireRate);
+        }
+        this.nextFire = Engine.game.time.now + nF;
+        let projectile = this.projectiles.getFirstExists(false);
+        if (projectile) {
+          let px = this.sprite.centerX;
+          let py = this.sprite.centerY;
+          projectile.reset(px, py);
+          projectile.health = BOSS_DATA.projectileHealth;
+          Engine.game.physics.arcade.moveToObject(projectile, player.sprite, this.projectileSpeed);
+          Engine.sounds["boss"].play();
         }
       }
     }
@@ -1844,99 +2022,148 @@
       this.environment = Engine.game.add.tileSprite(0, 0, Engine.GAME_WIDTH, Engine.GAME_HEIGHT, "environment");
       this.environment.fixedToCamera = true;
       this.environment.autoScroll(-Engine.SCROLL_SPEED, 0);
-      Engine.player = new Player();
-      Engine.player.sprite.animations.play(Engine.player.facing);
-      Engine.game.camera.reset();
-      Engine.game.camera.follow(Engine.player.sprite, Phaser.Camera.FOLLOW_PLATFORMER);
+      this.player = new Player();
+      this.player.sprite.animations.play(this.player.facing);
+      this.boss = new Boss();
       this.vehicles = new Vehicles();
       this.buildings = new Buildings();
       this.powerups = new Powerups();
       this.missiles = new Missiles();
       Engine.particles = new Particles();
-      this.healthBar = Engine.game.add.graphics(8, 8);
-      this.healthBar.fixedToCamera = true;
-      this.drawHealthBar();
-      this.gameText = Engine.game.add.text(10, 10, "0", { font: "18px Monospace", fill: "#ffffff", align: "left" });
+      this.player.healthBar = Engine.game.add.graphics(8, 8);
+      this.player.healthBar.fixedToCamera = true;
+      this.player.healthBar.outlineColor = 7343360;
+      this.player.healthBar.fillColor = 4852740;
+      this.boss.healthBar = Engine.game.add.graphics(8, 56);
+      this.boss.healthBar.fixedToCamera = true;
+      this.boss.healthBar.outlineColor = 6254486;
+      this.boss.healthBar.fillColor = 2636390;
+      this.drawHealthBar(this.player);
+      this.gameText = Engine.game.add.text(12, 12, "0", { font: "16px Monospace", fill: "#ffffff", align: "left" });
       this.gameText.fixedToCamera = true;
       this.scoreText = Engine.game.add.text(Engine.game.camera.width - 160, 10, "0", { font: "18px Monospace", fill: "#ffffff", align: "left" });
       this.scoreText.fixedToCamera = true;
+      this.bossText = Engine.game.add.text(12, 60, "0", { font: "16px Monospace", fill: "#ffffff", align: "left" });
+      this.bossText.fixedToCamera = true;
       this.input = {
         // cursor:  Engine.game.input.keyboard.createCursorKeys(),
         left: Engine.game.input.keyboard.addKey(Phaser.Keyboard.A),
         right: Engine.game.input.keyboard.addKey(Phaser.Keyboard.D),
         jump: Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
       };
+      this.music = Engine.game.add.audio("bg-music");
+      this.music.loop = true;
+      this.music.volume = 0.8;
+      this.music.play();
+      this.bossMusic = Engine.game.add.audio("boss-music");
+      this.bossMusic.loop = true;
+      this.bossMusic.volume = 0.9;
+      Engine.sounds["health-powerup"] = Engine.game.add.audio("health-powerup");
+      Engine.sounds["flame-powerup"] = Engine.game.add.audio("flame-powerup");
+      Engine.sounds["bomb-powerup"] = Engine.game.add.audio("bomb-powerup");
+      Engine.sounds["jet"] = Engine.game.add.audio("jet");
+      Engine.sounds["truck"] = Engine.game.add.audio("truck");
+      Engine.sounds["tank"] = Engine.game.add.audio("tank");
+      Engine.sounds["chopper"] = Engine.game.add.audio("chopper");
+      Engine.sounds["missile"] = Engine.game.add.audio("missile");
+      Engine.sounds["building"] = Engine.game.add.audio("building");
+      Engine.sounds["boss"] = Engine.game.add.audio("boss");
+      Engine.sounds["boss"].volume = 0.7;
+      Engine.sounds["boss-end"] = Engine.game.add.audio("boss");
+      Engine.sounds["explode"] = Engine.game.add.audio("explode");
+      Engine.sounds["player-fire"] = Engine.game.add.audio("player-fire");
+      Engine.sounds["player-hit"] = Engine.game.add.audio("player-hit");
+      Engine.sounds["player-hit"].allowMultiple = false;
       Engine.levelTime = 0;
       this.levelTimer = Engine.game.time.create(false);
       this.levelTimer.loop(100, function() {
         Engine.levelTime += 0.1;
-        if (Engine.player.alive) {
+        if (this.player.alive) {
           Engine.score += 1;
         }
       }, this);
       this.levelTimer.start();
     },
-    drawHealthBar: function() {
+    drawHealthBar: function(gameObject) {
       var maxWidth = Engine.game.camera.width - 16;
       var height = 32;
-      var width = maxWidth * (Engine.player.health / 100);
-      this.healthBar.clear();
+      var width = maxWidth * (gameObject.health / 100);
+      gameObject.healthBar.clear();
       if (width > 0) {
-        this.healthBar.beginFill(7343360, 0.5);
-        this.healthBar.lineStyle(2, 4852740, 0.8);
-        this.healthBar.moveTo(0, 0);
-        this.healthBar.lineTo(width, 0);
-        this.healthBar.lineTo(width, height);
-        this.healthBar.lineTo(0, height);
-        this.healthBar.lineTo(0, 0);
-        this.healthBar.endFill();
+        gameObject.healthBar.beginFill(gameObject.healthBar.fillColor, 0.5);
+        gameObject.healthBar.lineStyle(2, gameObject.healthBar.outlineColor, 0.8);
+        gameObject.healthBar.moveTo(0, 0);
+        gameObject.healthBar.lineTo(width, 0);
+        gameObject.healthBar.lineTo(width, height);
+        gameObject.healthBar.lineTo(0, height);
+        gameObject.healthBar.lineTo(0, 0);
+        gameObject.healthBar.endFill();
       }
     },
     update: function() {
+      if (Engine.score > 500 && this.boss.health > 0) {
+        Engine.gameMode = Engine.GAME_MODES.BOSS;
+      }
       if (Engine.gameMode == Engine.GAME_MODES.RUN) {
-        Engine.game.physics.arcade.overlap(Engine.player.sprite, this.buildings.group, this.hitPlayerBuldings, null, this);
-        Engine.game.physics.arcade.overlap(Engine.player.sprite, this.vehicles.group, this.hitPlayerVehicles, null, this);
-        Engine.game.physics.arcade.overlap(Engine.player.sprite, this.missiles.group, this.hitPlayerMissiles, null, this);
-        Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.vehicles.group, this.hitProjectilesObjects, null, this);
-        Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.buildings.group, this.hitProjectilesObjects, null, this);
-        Engine.game.physics.arcade.overlap(Engine.player.projectiles, this.missiles.group, this.hitProjectilesObjects, null, this);
-        Engine.game.physics.arcade.overlap(Engine.player.sprite, this.powerups.group, this.hitPlayerPowerups, null, this);
-        Engine.game.physics.arcade.overlap(Engine.player.sprite, this.vehicles.projectiles, this.hitPlayerEnemyProjectiles, null, this);
-        this.vehicles.update();
+        Engine.game.physics.arcade.overlap(this.player.sprite, this.buildings.group, this.hitPlayerBuldings, null, this);
+        Engine.game.physics.arcade.overlap(this.player.sprite, this.vehicles.group, this.hitPlayerVehicles, null, this);
+        Engine.game.physics.arcade.overlap(this.player.sprite, this.missiles.group, this.hitPlayerMissiles, null, this);
+        Engine.game.physics.arcade.overlap(this.player.projectiles, this.vehicles.group, this.hitProjectilesObjects, null, this);
+        Engine.game.physics.arcade.overlap(this.player.projectiles, this.buildings.group, this.hitProjectilesObjects, null, this);
+        Engine.game.physics.arcade.overlap(this.player.projectiles, this.missiles.group, this.hitProjectilesObjects, null, this);
+        Engine.game.physics.arcade.overlap(this.player.sprite, this.powerups.group, this.hitPlayerPowerups, null, this);
+        Engine.game.physics.arcade.overlap(this.player.sprite, this.vehicles.projectiles, this.hitPlayerEnemyProjectiles, null, this);
+        this.vehicles.update(this.player);
         this.buildings.update();
         this.powerups.update();
         this.missiles.update();
+        if (this.player.state == PLAYER_STATES.FLAME && Engine.levelTime > this.player.powerupTime) {
+          this.player.state = PLAYER_STATES.NORMAL;
+          console.log(`new state: ${this.player.state}`);
+        }
       } else if (Engine.gameMode == Engine.GAME_MODES.BOSS) {
-        this.missiles.update();
+        if (this.boss.hasSpawned == false) {
+          this.boss.hasSpawned = true;
+          this.music.stop();
+          this.bossMusic.play();
+          if (this.player.alive) {
+            this.player.health = 100;
+            this.player.state = PLAYER_STATES.NORMAL;
+          }
+          this.clearGameObjects();
+          Engine.game.add.tween(this.environment).to({ alpha: 0.3 }, 1e3, Phaser.Easing.Linear.None, true, 0);
+          Engine.game.time.events.add(1500, function() {
+            this.boss.spawn();
+          }, this);
+        }
+        if (this.boss.alive) {
+          Engine.game.physics.arcade.overlap(this.player.sprite, this.boss.sprite, this.hitPlayerBoss, null, this);
+          Engine.game.physics.arcade.overlap(this.player.sprite, this.boss.projectiles, this.hitPlayerBoss, null, this);
+          Engine.game.physics.arcade.overlap(this.player.projectiles, this.boss.sprite, this.hitProjectileBoss, null, this);
+          Engine.game.physics.arcade.overlap(this.player.projectiles, this.boss.projectiles, this.hitProjectilesObjects, null, this);
+        }
+        Engine.game.physics.arcade.overlap(this.player.sprite, this.vehicles.group, this.hitPlayerMissiles, null, this);
+        Engine.game.physics.arcade.overlap(this.player.projectiles, this.vehicles.group, this.hitProjectilesObjects, null, this);
+        Engine.game.physics.arcade.overlap(this.player.sprite, this.vehicles.projectiles, this.hitPlayerEnemyProjectiles, null, this);
+        this.boss.update(this.player);
+        if (this.boss.health < this.boss.totalHealth * 0.75) {
+          this.vehicles.update(this.player);
+        }
+        this.drawHealthBar(this.boss);
       }
       if (this.game.input.activePointer.isDown) {
-        Engine.player.fire();
+        this.player.fire();
       }
-      this.updateMovement();
-      Engine.player.updateProjectiles();
-      const healthText = Engine.player.health > 0 ? Engine.player.health : "dead";
+      this.player.update(this.input);
+      this.player.updateProjectiles();
+      const healthText = this.player.health > 0 ? Math.trunc(this.player.health) : "dead";
       this.gameText.text = `Health: ${healthText}`;
       this.scoreText.text = `Score: ${Engine.score}`;
-    },
-    movePlayer: function(direction) {
-      let directionFactor = direction == "left" ? -1 : 1;
-      Engine.player.sprite.body.velocity.x = Engine.player.speed * directionFactor;
-      Engine.player.facing = direction;
-      Engine.player.moving = true;
-      Engine.player.sprite.animations.play(Engine.player.facing);
-    },
-    updateMovement: function() {
-      if (this.input.left.isDown) {
-        this.movePlayer("left");
-      } else if (this.input.right.isDown) {
-        this.movePlayer("right");
-      }
-      if (!Engine.player.moving) {
-        Engine.player.sprite.body.velocity.x = 0;
-      }
-      Engine.player.moving = false;
-      if (this.input.jump.isDown) {
-        Engine.player.jump();
+      if (Engine.gameMode == Engine.GAME_MODES.BOSS) {
+        const bossHealthText = this.boss.health > 0 ? Math.trunc(this.boss.health) : "dead";
+        this.bossText.text = `Boss: ${bossHealthText}`;
+      } else {
+        this.bossText.text = "";
       }
     },
     // Callback for player projectile hits
@@ -1944,10 +2171,9 @@
       _object.health -= 0.333;
       if (_object.health > 0) {
         Engine.particles.startSmallExplosion(Engine.particles.smallSmoke, _projectile.centerX + 50, _projectile.centerY);
-        if (_projectile.emitter) {
-          _projectile.emitter.destroy();
+        if (this.player.state == PLAYER_STATES.NORMAL) {
+          _projectile.kill();
         }
-        _projectile.kill();
         Engine.score += 2;
       } else {
         Engine.particles.startExplosion(Engine.particles.smoke, _object.centerX, _object.centerY);
@@ -1957,70 +2183,68 @@
         } else {
           Engine.score += 100;
         }
-        if (_projectile.emitter) {
-          _projectile.emitter.destroy();
-        }
         _projectile.kill();
         _object.kill();
+        Engine.sounds["explode"].play();
       }
     },
     // Handle power up collisions
     hitPlayerPowerups: function(_player, _powerup) {
-      console.log(`hit: ${_powerup.config.sprite}`);
       switch (_powerup.config.sprite) {
         case "bomb-powerup":
-          this.vehicles.group.forEach(function(vehicle) {
-            vehicle.kill();
-          }, this);
-          this.buildings.group.forEach(function(building) {
-            building.kill();
-          }, this);
-          this.missiles.group.forEach(function(missile) {
-            missile.kill();
-          }, this);
+          this.clearGameObjects();
           Engine.particles.startExplosion(Engine.particles.bigSmoke, _player.centerX, _player.centerY);
           _powerup.kill();
           Engine.game.camera.flash(9256964, 850);
           break;
         case "health-powerup":
-          Engine.particles.startSmallExplosion(Engine.particles.stars, _powerup.centerX, _powerup.centerY);
+          Engine.particles.startSmallExplosion(Engine.particles.stars, this.player.sprite.centerX, this.player.sprite.centerY);
           _powerup.kill();
           Engine.game.camera.flash(16733268, 850);
-          this.drawHealthBar();
+          this.drawHealthBar(this.player);
+          break;
+        case "flame-powerup":
+          _powerup.kill();
+          Engine.game.camera.flash(9109504, 850);
+          this.player.state = PLAYER_STATES.FLAME;
+          this.player.powerupTime = Engine.levelTime + 6;
+          console.log(`new state: ${this.player.state}`);
           break;
         default:
+          _powerup.kill();
           break;
       }
       Engine.score += _powerup.config.score;
-      Engine.player.health += _powerup.config.health;
-      Engine.player.health = Engine.player.health > 100 ? 100 : Engine.player.health;
+      this.player.health += _powerup.config.health;
+      this.player.health = this.player.health > 100 ? 100 : this.player.health;
+      Engine.sounds[_powerup.config.sprite].play();
       return;
     },
     hitPlayerEnemyProjectiles: function(_player, _projectile) {
-      Engine.player.health -= 1;
-      if (Engine.player.health > 0) {
+      this.player.health -= 1;
+      if (this.player.health > 0) {
         Engine.particles.startSplat(Engine.particles.splat, _projectile.centerX + 50, _projectile.centerY);
         _projectile.kill();
+        Engine.sounds["player-hit"].play();
       } else {
         Engine.particles.startSplat(Engine.particles.splat, _projectile.centerX, _projectile.centerY);
-        if (_projectile.emitter) {
-          _projectile.emitter.destroy();
-        }
         _projectile.kill();
+        Engine.sounds["explode"].play();
         this.playerDie();
       }
-      this.drawHealthBar();
+      this.drawHealthBar(this.player);
       return;
     },
     // We do the damage here
     hitPlayerBuldings: function(_player, _building) {
-      _building.health -= 0.1;
+      _building.health -= 0.15;
       if (_building.health > 0) {
         Engine.particles.startCrumble(Engine.particles.dust, _building.centerX, _building.centerY);
       } else {
         Engine.particles.startExplosion(Engine.particles.smoke, _building.centerX, _building.centerY);
         _building.kill();
-        Engine.score += 150;
+        Engine.score += 250;
+        Engine.sounds["building"].play();
       }
       return;
     },
@@ -2028,35 +2252,94 @@
       Engine.particles.startExplosion(Engine.particles.smoke, _vehicle.centerX, _vehicle.centerY);
       Engine.particles.startSmallExplosion(Engine.particles.dust, _vehicle.centerX, _vehicle.centerY);
       _vehicle.kill();
-      Engine.score += 100;
+      Engine.score += 150;
+      Engine.sounds["explode"].play();
       return;
     },
     // Missiles collisions
     hitPlayerMissiles: function(_player, _missile) {
-      Engine.player.health -= _missile.config.damage;
-      +// destroy it
+      this.player.health -= _missile.config.damage;
       Engine.particles.startExplosion(Engine.particles.splat, _missile.centerX, _missile.centerY);
       Engine.particles.startSmallExplosion(Engine.particles.smallSmoke, _missile.centerX, _missile.centerY);
       _missile.kill();
-      this.drawHealthBar();
-      if (Engine.player.health < 1) {
+      this.drawHealthBar(this.player);
+      if (this.player.health < 1) {
+        Engine.sounds["explode"].play();
         this.playerDie();
+      } else {
+        Engine.sounds["player-hit"].play();
       }
       return;
     },
+    // Boss Mode Collisions
+    hitPlayerBoss: function(_player, _boss) {
+      this.player.health -= this.boss.damage;
+      Engine.particles.startSmallExplosion(Engine.particles.splat, _player.centerX + 50, _player.centerY);
+      this.drawHealthBar(this.player);
+      if (this.player.health < 1) {
+        Engine.sounds["explode"].play();
+        this.playerDie();
+      } else {
+        if (this.levelTime - _boss.lastPlay > 1) {
+          Engine.sounds["player-hit"].play();
+          _boss.lastPlay = this.levelTime;
+        }
+      }
+    },
+    hitProjectileBoss: function(_object, _projectile) {
+      this.boss.health -= 0.333;
+      console.log(this.boss.health);
+      if (this.boss.health > 0) {
+        console.log("in here");
+        Engine.particles.startSmallExplosion(Engine.particles.smallSmoke, _projectile.centerX + 50, _projectile.centerY);
+        _projectile.kill();
+        Engine.score += 25;
+      } else {
+        Engine.particles.startExplosion(Engine.particles.smoke, _object.centerX, _object.centerY);
+        Engine.particles.startExplosion(Engine.particles.dust, _object.centerX, _object.centerY);
+        Engine.particles.startExplosion(Engine.particles.splat, _object.centerX, _object.centerY);
+        Engine.particles.startExplosion(Engine.particles.stars, this.player.sprite.centerX, this.player.sprite.centerY);
+        Engine.score += 5e3;
+        _projectile.kill();
+        _object.kill();
+        this.boss.alive = false;
+        this.player.health = 100;
+        Engine.sounds["boss-end"].play();
+        this.bossMusic.stop();
+        this.music.play();
+        let normalizeBGTween = Engine.game.add.tween(this.environment).to({ alpha: 1 }, 1e3, Phaser.Easing.Linear.None, true, 0);
+        normalizeBGTween.onComplete.addOnce(() => {
+          Engine.gameMode = Engine.GAME_MODES.RUN;
+          this.boss.hasSpawned = false;
+        }, this);
+      }
+      this.drawHealthBar(this.boss);
+    },
     playerDie: function() {
-      if (Engine.player.alive) {
-        Engine.player.alive = false;
+      if (this.player.alive) {
+        this.player.alive = false;
         Engine.deaths += 1;
         Engine.levelDeaths += 1;
-        Engine.player.sprite.kill();
+        this.player.sprite.kill();
         Engine.game.camera.flash(6231060, 850);
       }
-      Engine.game.time.events.add(3500, function() {
+      Engine.game.time.events.add(5e3, function() {
+        this.music.stop();
+        this.bossMusic.stop();
         Engine.game.state.start("menu");
       }, this);
     },
-    reset: function() {
+    // clear all game objects
+    clearGameObjects: function() {
+      this.vehicles.group.forEach(function(vehicle) {
+        vehicle.kill();
+      }, this);
+      this.buildings.group.forEach(function(building) {
+        building.kill();
+      }, this);
+      this.missiles.group.forEach(function(missile) {
+        missile.kill();
+      }, this);
     }
   };
   var play_default = PlayState;
@@ -2085,13 +2368,12 @@
     console.log(`Welcome to my Metaboy Game Jam submission.`);
     let uap = new import_ua_parser_js.UAParser();
     Engine2.device = uap.getDevice();
-    Engine2.maps = gameOptions.maps;
+    Engine2.gameMode = Engine2.GAME_MODES.RUN;
     Engine2.backgroundColor = gameOptions.backgroundColor;
     Engine2.backgroundImage = gameOptions.backgroundImage;
     Engine2.backgroundMusic = gameOptions.music;
-    Engine2.currentMap = 0;
     Engine2.splatter = 1;
-    Engine2.gravity = 0;
+    Engine2.gravity = 2500;
     Engine2.playerData = gameOptions.playerData;
     Engine2.weaponData = gameOptions.weaponData;
     Engine2.walletAddress = gameOptions.walletAddress;
@@ -2100,7 +2382,6 @@
     Engine2.deaths = 0;
     Engine2.levelDeaths = 0;
     Engine2.levelTime = 0;
-    Engine2.gameMode = Engine2.GAME_MODES.RUN;
     setCavasSize();
     Engine2.game = new Phaser2.Game(Engine2.GAME_WIDTH, Engine2.GAME_HEIGHT, Phaser2.AUTO, "game");
     Engine2.musicPlaying = false;

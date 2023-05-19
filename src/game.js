@@ -39,18 +39,14 @@ export function runGame(gameOptions) {
 	let uap = new UAParser();
 	Engine.device = uap.getDevice();
 	
-	// Game maps
-	// when and endlevel object is reached, the next map in the array is loaded
-	// if there are no more maps, the game is over and the player wins!
 	
-	Engine.maps = gameOptions.maps;
+	Engine.gameMode = Engine.GAME_MODES.RUN;
 	Engine.backgroundColor = gameOptions.backgroundColor;
 	Engine.backgroundImage = gameOptions.backgroundImage;
 	Engine.backgroundMusic = gameOptions.music;
-	Engine.currentMap = 0;
 	Engine.splatter = 1;
 	
-	Engine.gravity = 0;
+	Engine.gravity = 2500;
 	Engine.playerData = gameOptions.playerData;
 	Engine.weaponData = gameOptions.weaponData;
 	Engine.walletAddress = gameOptions.walletAddress;
@@ -63,7 +59,6 @@ export function runGame(gameOptions) {
 	Engine.deaths = 0;
 	Engine.levelDeaths = 0;
 	Engine.levelTime = 0;
-	Engine.gameMode = Engine.GAME_MODES.RUN;
 
 	setCavasSize();
 	Engine.game = new Phaser.Game(Engine.GAME_WIDTH, Engine.GAME_HEIGHT, Phaser.AUTO, 'game');

@@ -1,6 +1,12 @@
 
 import { range } from "../utils";
 
+export const PLAYER_STATES = {
+	NORMAL: 0,
+	FLAME: 1,
+	LAZER: 2 // TBD
+}
+
 export default class Player {
 	constructor() {
 		this.startY = 0;
@@ -15,14 +21,17 @@ export default class Player {
 
 		// set up gravity
 		Engine.game.physics.arcade.enable(this.sprite);
-		this.sprite.body.gravity.y = 2500;
+		this.sprite.body.gravity.y = Engine.gravity;
 		this.sprite.body.collideWorldBounds = true;
 		
 		this.health = 100;
 		this.nextFire = 0;
-		// this.fireRate =  450;
+		
 		this.fireRate =  65;
 		this.alive = true;
+
+		this.state = PLAYER_STATES.NORMAL;
+		this.powerupTime = 0;
 
 		this.facing = 'right';		
 		this.moving = false;
@@ -44,12 +53,64 @@ export default class Player {
 	}
 
 	isGrounded() {
-		return this.sprite.body.blocked.down || this.sprite.body.touching.down;
+		return ((this.sprite.y + this.sprite.height / 2) > (Engine.GAME_HEIGHT - 10));
+	}
+
+	move(direction) {
+		// Move the player
+		// Set direction factor. Negative = Left. Positive = Right
+		let directionFactor = direction == "left" ? -1 : 1;
+
+		this.sprite.body.velocity.x = this.speed * directionFactor;
+		
+		this.facing = direction;
+		this.moving = true;
+
+		// update animation
+		this.sprite.animations.play(this.facing);
+	}
+	
+	update(_input) {
+
+		// check state
+		if (this.state == PLAYER_STATES.FLAME) {
+			this.sprite.tint = 0xdb7b41;
+		} else {
+			this.sprite.tint = 0xffffff;
+		}
+
+		// regen some health. you are a kaiju after all
+		if (this.health < 100 && this.alive) {
+			this.health += 0.01;
+		}
+
+		// Keyboard Movement
+		// If the left arrow key is pressed
+		if (_input.left.isDown) {
+			this.move('left');		
+		}
+		// If the right arrow key is pressed
+		else if (_input.right.isDown) {
+			this.move('right');		
+		}
+
+		// Stop the player
+		if (!this.moving) {
+			this.sprite.body.velocity.x = 0;
+		}
+
+		// Reset moving check for next update cycle
+		this.moving = false;
+
+		// Jump key 
+		if (_input.jump.isDown) {
+			this.jump();			
+		} 
 	}
 
 	jump() {
 		// If player is touching the ground
-		if ( ((this.sprite.y + this.sprite.height / 2) > (Engine.GAME_HEIGHT - 10)) && this.alive ) {
+		if ( this.isGrounded() && this.alive ) {
 			// Move the player upward (jump)
 			this.sprite.body.velocity.y = this.jumpForce;
 			// Engine.sounds["jump"].play();
@@ -84,9 +145,18 @@ export default class Player {
 					projectile.velocity = 150;
 					projectile.rotation =  Engine.game.physics.arcade.angleToPointer(projectile);
 					Engine.game.physics.arcade.velocityFromAngle(projectile.angle, 750, projectile.body.velocity);
+
+					// check state for alterations
+					if (this.state == PLAYER_STATES.FLAME) {
+						projectile.scale.setTo(2.5);
+					} else {
+						projectile.scale.setTo(1);
+					}
 				}
 			}
 			
+			// play sound - todo: enum
+			Engine.sounds["player-fire"].play();
 		}
 	}
 

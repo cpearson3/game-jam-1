@@ -12,6 +12,13 @@ const POWERUP_TYPES = [
         width: 64,
         score: 500,
         health: 25
+    },
+    {
+        sprite: "flame-powerup",
+        height: 64,
+        width: 64,
+        score: 500,
+        health: 0
     }
 ]
 
@@ -41,21 +48,23 @@ export default class Powerups {
 		powerup.body.gravity.y = 0;
 		powerup.body.immovable = true;
 		// powerup.body.moves = false;
-		powerup.body.velocity.y = 450;
+		powerup.body.velocity.y = 350;
         powerup.objectType = "powerup"; // clean this up
         powerup.config = powerupType;
 		return powerup;
     }
 
     update() {
-        if (this.spawnTime < Engine.levelTime && Engine.score > 3500) {
+        if (this.spawnTime < Engine.levelTime && Engine.score > 4000) {
 			this.spawn();
-            if (Engine.score < 9000) {
+            if (Engine.score < 8000) {
                 this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(11,13);
-            } else if (Engine.score < 15000) {
-                this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(7,9);
+            } else if (Engine.score < 12000) {
+                this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(8,10);
+            } else if (Engine.score < 30000) {
+                this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(6,7);
             } else {
-                this.spawnTime = Engine.levelTime + 5;
+                this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3,5);
             }
 			
 		} 

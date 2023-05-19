@@ -40,13 +40,13 @@ export default class Missiles {
         if (missileType.sprite == 'missile') {
             // horizontal
             // fires from left
-            vx = 0;
+            vx = 0 - missileType.width / 2;
             vy = Engine.GAME_HEIGHT * (Engine.game.rnd.integerInRange(35,65) / 100);
         } else{
             // vertical "missle" 
             // fall more on the right side
-            vx = Engine.GAME_WIDTH * (Engine.game.rnd.integerInRange(35,95) / 100);
-            vy = 0;
+            vx = Engine.GAME_WIDTH * (Engine.game.rnd.integerInRange(33,85) / 100);
+            vy = 0 - missileType.height / 2;
         }
 		
 		
@@ -67,19 +67,24 @@ export default class Missiles {
 		missle.config = missileType;
 		missle.objectType = "missle";
 
+        // play sound - todo: enum
+        Engine.sounds["missile"].play();
+
 		return missle;
     }
 
     update() {
-        if (this.spawnTime < Engine.levelTime && Engine.score > 5000) {
+        if (this.spawnTime < Engine.levelTime && Engine.score > 4000) {
 			this.spawn();
-            if (Engine.score < 10000) {
+            if (Engine.score < 8000) {
                 this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(6,8);
-            } else if (Engine.score < 15000) {
-                this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(4,5)
-            } else {
-                this.spawnTime = Engine.levelTime + 2;
-            }
+            } else if (Engine.score < 12000) {
+                this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(5,6);
+            } else if (Engine.score < 30000) {
+				this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3,4);
+			} else {
+				this.spawnTime = Engine.levelTime + 1;
+			}
 			
 		} 
     }

@@ -7,13 +7,13 @@ export default class Particles {
         // Set the 'pixel' image for the particles
         this.splat.makeParticles('pixel');
         // The speed will be randomly picked between -100 and 25 for each particle
-        this.splat.setYSpeed(-100, 25);
+        this.splat.setYSpeed(-500, 500);
         // Do the same for the x speed
-        this.splat.setXSpeed(-75, 75);
+        this.splat.setXSpeed(-500, 500);
         // Use some gravity for the particles
         this.splat.gravity = Engine.gravity / 2;
-        this.splat.setAlpha(0.8, 0, 1000);
-        this.splat.setScale(1.15, 0.5, 1.15, 0.5, 1000);
+        this.splat.setAlpha(0.6, 0, 1000);
+        this.splat.setScale(2.15, 0.5, 2.15, 0.5, 1000);
 
         // // smoke effect
         this.smoke = Engine.game.add.emitter(0, 0, 125);
@@ -61,7 +61,7 @@ export default class Particles {
         this.stars.setYSpeed(-300, 300);
         this.stars.setXSpeed(-300, 300);
         this.stars.setAlpha(1, 0, 2000);
-        this.stars.setScale(0.25, 1.5, 0.25, 1.5, 2000);
+        this.stars.setScale(0.25, 2, 0.25, 2, 2000);
 
     }
 	startExplosion(emitter, x, y) {
