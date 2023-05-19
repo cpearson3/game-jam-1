@@ -2017,6 +2017,9 @@
       this.music.loop = true;
       this.music.volume = 1;
       this.music.play();
+      if (Engine.score > 0) {
+        var scoreLabel = Engine.game.add.text(8, 8, `Last score: ${Engine.score}`, { font: `18px VT323`, fill: "#ffffff" });
+      }
       var titleLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, 150, "GamesMeanEverything presents..", { font: `32px VT323`, fill: "#ffffff" });
       titleLabel.anchor.setTo(0.5, 0.5);
       let levelY = 225;
@@ -3069,8 +3072,8 @@
     Engine2.walletAddress = gameOptions.walletAddress;
     Engine2.sounds = {};
     Engine2.muteStatus = gameOptions.muted;
+    Engine2.score = 0;
     Engine2.deaths = 0;
-    Engine2.levelDeaths = 0;
     Engine2.levelTime = 0;
     setCavasSize();
     Engine2.game = new Phaser2.Game(Engine2.GAME_WIDTH, Engine2.GAME_HEIGHT, Phaser2.AUTO, "game");

@@ -12,6 +12,7 @@ import Boss from '../objects/boss';
 const PlayState = {
 	create: function() {	
 		
+		// Reset score
 		Engine.score = 0;
 
 		// set campaign background color

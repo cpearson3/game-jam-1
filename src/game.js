@@ -56,8 +56,10 @@ export function runGame(gameOptions) {
 	Engine.muteStatus = gameOptions.muted;
 
 	// Initialize in-game counters
+	Engine.score = 0;
 	Engine.deaths = 0;
-	Engine.levelDeaths = 0;
+
+	// Game timer in seconds
 	Engine.levelTime = 0;
 
 	setCavasSize();

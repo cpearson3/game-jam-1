@@ -52,9 +52,14 @@ const MenuState = {
 		this.music.loop = true; // Make it loop
 		this.music.volume = 1;
 		this.music.play(); // Start the music
-		
 
-		// Set font size		
+
+		// show previous score if available
+		if (Engine.score > 0) {
+			var scoreLabel  = Engine.game.add.text(8, 8, `Last score: ${Engine.score}`,{ font: `18px VT323`, fill: '#ffffff' })
+		}
+
+		// Add title font	
 		var titleLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, 150, 'GamesMeanEverything presents..',{ font: `32px VT323`, fill: '#ffffff' })
 		titleLabel.anchor.setTo(0.5, 0.5);
 
