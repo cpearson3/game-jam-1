@@ -55,6 +55,10 @@ const PlayState = {
 		this.boss.healthBar.outlineColor = 0x5f6f96;
 		this.boss.healthBar.fillColor = 0x283a66;
 
+		// add aim line
+		this.player.aimLine = Engine.game.add.graphics(0,0);
+		this.player.aimLine.fixedToCamera = true;
+
 		// draw initial health bar
 		this.drawHealthBar(this.player);
 		
@@ -76,10 +80,18 @@ const PlayState = {
 			jump: Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR),
 		};
 
+		// Create key to toggle aim assist
+		var aimKey = Engine.game.input.keyboard.addKey(Phaser.Keyboard.Q);
+		// Add call back to toggle aiming
+		aimKey.onDown.add(function() {
+			Engine.aimAssist = !Engine.aimAssist;
+			this.player.aimLine.clear();
+		}, this);
+
 		// Add sounds
 		this.music = Engine.game.add.audio("bg-music"); // Add the music
 		this.music.loop = true; // Make it loop
-		this.music.volume = 0.7;
+		this.music.volume = 1;
 		this.music.play(); // Start the music
 		
 		this.bossMusic = Engine.game.add.audio("boss-music"); // Add the music
@@ -88,7 +100,7 @@ const PlayState = {
 
 		this.endMusic = Engine.game.add.audio("end-music");
 		this.endMusic.loop = true;
-		this.endMusic.volume = 0.7;
+		this.endMusic.volume = 1;
 
 		Engine.sounds["health-powerup"] = Engine.game.add.audio("health-powerup");
 		Engine.sounds["flame-powerup"] = Engine.game.add.audio("flame-powerup");
@@ -240,13 +252,25 @@ const PlayState = {
 			}
 
 			// draw boss health bar
-			this.drawHealthBar(this.boss);
-			
+			this.drawHealthBar(this.boss);	
 		}
+
 
 		// So anyways...
 		if (this.game.input.activePointer.isDown) {
 			this.player.fire();
+		}
+
+		// draw aim line
+		if (this.player.health > 0 && Engine.aimAssist) {
+			let ax = this.game.input.activePointer.x;
+			let ay = this.game.input.activePointer.y;
+
+			this.player.aimLine.clear();
+			this.player.aimLine.lineStyle(2, 0xffffff);
+			this.player.aimLine.moveTo(this.player.sprite.x + 25, this.player.sprite.y - 100);
+			this.player.aimLine.lineTo(ax,ay);
+
 		}
 
 		// update player movement
@@ -566,7 +590,7 @@ const PlayState = {
 			this.player.sprite.kill();
 			// Flash screen
 			Engine.game.camera.flash(0x5f1414, 850);
-			// Engine.sounds["dead"].play();
+			this.player.aimLine.clear();
 		}
 
 		// Call the 'startMenu' function in 1000ms

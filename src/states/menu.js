@@ -78,17 +78,16 @@ const MenuState = {
 
 		// Instructions
 		let instructionsY = startY + 100;
-		var instructionsLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, instructionsY, `A Left. D Right. SPACE Jumps. MOUSE Shoots `,{ font: `24px VT323`, fill: '#ffffff' });
+		var instructionsLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, instructionsY, `A Left. D Right. SPACE Jumps. MOUSE Shoots.`,{ font: `24px VT323`, fill: '#ffffff' });
 		instructionsLabel.anchor.setTo(0.5, 0.5);
 		
 		// Create the tween
 		Engine.game.add.tween(startButton)
 			.to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None, true, 0.75, 500, true);
 		
-		// Create a new Phaser keyboard variable: the up arrow key
+		// Create start key
 		var startKey = Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-
-		// When the 'upKey' is pressed, it will call the 'start' function once
+		// Add call back to start game
 		startKey.onDown.addOnce(this.start, this);
 
 		

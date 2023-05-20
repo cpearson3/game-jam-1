@@ -2742,6 +2742,8 @@
       this.boss.healthBar.fixedToCamera = true;
       this.boss.healthBar.outlineColor = 6254486;
       this.boss.healthBar.fillColor = 2636390;
+      this.player.aimLine = Engine.game.add.graphics(0, 0);
+      this.player.aimLine.fixedToCamera = true;
       this.drawHealthBar(this.player);
       this.gameText = Engine.game.add.text(12, 12, "0", { font: "22px VT323", fill: "#ffffff", align: "left" });
       this.gameText.fixedToCamera = true;
@@ -2755,16 +2757,21 @@
         right: Engine.game.input.keyboard.addKey(Phaser.Keyboard.D),
         jump: Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
       };
+      var aimKey = Engine.game.input.keyboard.addKey(Phaser.Keyboard.Q);
+      aimKey.onDown.add(function() {
+        Engine.aimAssist = !Engine.aimAssist;
+        this.player.aimLine.clear();
+      }, this);
       this.music = Engine.game.add.audio("bg-music");
       this.music.loop = true;
-      this.music.volume = 0.7;
+      this.music.volume = 1;
       this.music.play();
       this.bossMusic = Engine.game.add.audio("boss-music");
       this.bossMusic.loop = true;
       this.bossMusic.volume = 0.7;
       this.endMusic = Engine.game.add.audio("end-music");
       this.endMusic.loop = true;
-      this.endMusic.volume = 0.7;
+      this.endMusic.volume = 1;
       Engine.sounds["health-powerup"] = Engine.game.add.audio("health-powerup");
       Engine.sounds["flame-powerup"] = Engine.game.add.audio("flame-powerup");
       Engine.sounds["bomb-powerup"] = Engine.game.add.audio("bomb-powerup");
@@ -2860,6 +2867,14 @@
       }
       if (this.game.input.activePointer.isDown) {
         this.player.fire();
+      }
+      if (this.player.health > 0 && Engine.aimAssist) {
+        let ax = this.game.input.activePointer.x;
+        let ay = this.game.input.activePointer.y;
+        this.player.aimLine.clear();
+        this.player.aimLine.lineStyle(2, 16777215);
+        this.player.aimLine.moveTo(this.player.sprite.x + 25, this.player.sprite.y - 100);
+        this.player.aimLine.lineTo(ax, ay);
       }
       this.player.update(this.input);
       this.player.updateProjectiles();
@@ -3059,6 +3074,7 @@
         Engine.deaths += 1;
         this.player.sprite.kill();
         Engine.game.camera.flash(6231060, 850);
+        this.player.aimLine.clear();
       }
       Engine.game.time.events.add(5e3, function() {
         this.music.stop();
@@ -3126,6 +3142,7 @@
     Engine2.muteStatus = gameOptions.muted;
     Engine2.score = 0;
     Engine2.deaths = 0;
+    Engine2.aimAssist = false;
     Engine2.levelTime = 0;
     setCavasSize();
     Engine2.game = new Phaser2.Game(Engine2.GAME_WIDTH, Engine2.GAME_HEIGHT, Phaser2.AUTO, "game");
