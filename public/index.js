@@ -1929,6 +1929,8 @@
       Engine.game.load.image("yellow-star", Engine.BASE_URL + "assets/yellow-star.png");
       Engine.game.load.image("projectile", Engine.BASE_URL + "assets/projectile.png");
       Engine.game.load.image("blue-flame", Engine.BASE_URL + "assets/blue-flame.png");
+      Engine.game.load.image("ice-particle", Engine.BASE_URL + "assets/ice_particle.png");
+      Engine.game.load.image("green-particle", Engine.BASE_URL + "assets/green_particle.png");
       Engine.game.load.image("environment", Engine.backgroundImage);
       Engine.game.load.image("building-deco", Engine.BASE_URL + "assets/building-deco.png");
       Engine.game.load.image("pyramid-tower", Engine.BASE_URL + "assets/pyramid-tower.png");
@@ -1952,6 +1954,7 @@
       Engine.game.load.spritesheet("boss", Engine.BASE_URL + "assets/boss.png", 483, 357);
       Engine.game.load.audio("bg-music", Engine.BASE_URL + "assets/sounds/bg-music.mp3");
       Engine.game.load.audio("boss-music", Engine.BASE_URL + "assets/sounds/boss-music.mp3");
+      Engine.game.load.audio("end-music", Engine.BASE_URL + "assets/sounds/end-music.mp3");
       Engine.game.load.audio("menu-music", Engine.BASE_URL + "assets/sounds/menu-music.mp3");
       Engine.game.load.audio("tank", Engine.BASE_URL + "assets/sounds/tank.mp3");
       Engine.game.load.audio("truck", Engine.BASE_URL + "assets/sounds/truck.mp3");
@@ -2088,12 +2091,29 @@
       this.bigSmoke.setXSpeed(-600, 600);
       this.bigSmoke.setAlpha(1, 0, 2500);
       this.bigSmoke.setScale(7.5, 0, 7.5, 0, 2500);
+      this.iceExplosion = Engine.game.add.emitter(0, 0, 250);
+      this.iceExplosion.makeParticles("ice-particle");
+      this.iceExplosion.gravity = Engine.gravity / 2;
+      this.iceExplosion.setYSpeed(-150, -550);
+      this.iceExplosion.setXSpeed(-500, 500);
+      this.iceExplosion.setAlpha(0.5, 0, 2500);
+      this.iceExplosion.setScale(1.75, 0, 1.75, 0, 2500);
       this.stars = Engine.game.add.emitter(0, 0, 50);
       this.stars.makeParticles("yellow-star");
       this.stars.setYSpeed(-300, 300);
       this.stars.setXSpeed(-300, 300);
       this.stars.setAlpha(1, 0, 2e3);
       this.stars.setScale(0.25, 2, 0.25, 2, 2e3);
+    }
+    createBossDamageEmitter() {
+      let emitter = Engine.game.add.emitter(0, 0, 250);
+      emitter.makeParticles("green-particle");
+      emitter.setYSpeed(-500, 500);
+      emitter.setXSpeed(-500, 500);
+      emitter.gravity = Engine.gravity / 2;
+      emitter.setAlpha(0.6, 0, 1e3);
+      emitter.setScale(2.15, 0.5, 2.15, 0.5, 1e3);
+      return emitter;
     }
     startExplosion(emitter, x, y) {
       emitter.x = x;
@@ -2362,10 +2382,6 @@
       fireRate: 150
     }
   ];
-  var VEHICLE_STATES = {
-    NORMAL: 0,
-    ICE: 1
-  };
   var Vehicles = class {
     constructor() {
       this.group = Engine.game.add.group();
@@ -2376,7 +2392,7 @@
       this.projectiles = Engine.game.add.group();
       this.projectiles.enableBody = true;
       this.projectiles.physicsBodyType = Phaser.Physics.ARCADE;
-      this.projectiles.createMultiple(50, "bullet", 0, false);
+      this.projectiles.createMultiple(75, "bullet", 0, false);
       this.projectiles.setAll("anchor.x", 0.5);
       this.projectiles.setAll("anchor.y", 0.5);
       this.projectiles.setAll("outOfBoundsKill", true);
@@ -2416,7 +2432,7 @@
       vehicle.config = vehicleType;
       vehicle.objectType = "vehicle";
       vehicle.nextFire = Engine.game.time.now + vehicleType.fireRate;
-      vehicle.state = VEHICLE_STATES.NORMAL;
+      vehicle.state = Engine.ENEMY_STATES.NORMAL;
       return vehicle;
     }
     update(player) {
@@ -2428,7 +2444,9 @@
           } else if (Engine.score < 8e3) {
             this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2, 4);
           } else if (Engine.score < 3e4) {
-            this.spawnTime = Engine.levelTime + 2;
+            this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2, 3);
+          } else if (Engine.score < 5e4) {
+            this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(1, 2);
           } else {
             this.spawnTime = Engine.levelTime + 1;
           }
@@ -2437,7 +2455,7 @@
         }
       }
       this.group.forEachAlive(function(vehicle) {
-        if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0 && vehicle.inCamera && vehicle.state == VEHICLE_STATES.NORMAL) {
+        if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0 && vehicle.inCamera && vehicle.state == Engine.ENEMY_STATES.NORMAL) {
           this.fire(vehicle, player);
         }
       }, this);
@@ -2509,18 +2527,21 @@
     update() {
       if (this.spawnTime < Engine.levelTime && Engine.score > 3500) {
         let newSpawn = this.spawn();
-        if (Engine.score < 8e3) {
+        if (Engine.score < 6e3) {
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(11, 13);
           newSpawn.body.velocity.y = 100;
-        } else if (Engine.score < 12e3) {
+        } else if (Engine.score < 1e4) {
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(8, 10);
           newSpawn.body.velocity.y = 200;
         } else if (Engine.score < 3e4) {
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(6, 7);
           newSpawn.body.velocity.y = 300;
+        } else if (Engine.score < 5e4) {
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3, 5);
+          newSpawn.body.velocity.y = 350;
         } else {
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2, 4);
-          newSpawn.body.velocity.y = 350;
+          newSpawn.body.velocity.y = 400;
         }
       }
     }
@@ -2587,8 +2608,10 @@
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(5, 6);
         } else if (Engine.score < 3e4) {
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3, 4);
+        } else if (Engine.score < 5e4) {
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2, 3);
         } else {
-          this.spawnTime = Engine.levelTime + 1;
+          this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(1, 2);
         }
       }
     }
@@ -2642,6 +2665,7 @@
       this.projectiles.setAll("anchor.y", 0.5);
       this.projectiles.setAll("outOfBoundsKill", true);
       this.projectiles.setAll("checkWorldBounds", true);
+      Engine.particles.bossDamageEmitter = Engine.particles.createBossDamageEmitter();
       this.sprite.alpha = 0;
       let fadeInTween = Engine.game.add.tween(this.sprite).to({ alpha: 1 }, 1e3, Phaser.Easing.Linear.None, true, 0);
       fadeInTween.onComplete.addOnce(() => {
@@ -2738,6 +2762,9 @@
       this.bossMusic = Engine.game.add.audio("boss-music");
       this.bossMusic.loop = true;
       this.bossMusic.volume = 0.7;
+      this.endMusic = Engine.game.add.audio("end-music");
+      this.endMusic.loop = true;
+      this.endMusic.volume = 0.7;
       Engine.sounds["health-powerup"] = Engine.game.add.audio("health-powerup");
       Engine.sounds["flame-powerup"] = Engine.game.add.audio("flame-powerup");
       Engine.sounds["bomb-powerup"] = Engine.game.add.audio("bomb-powerup");
@@ -2750,7 +2777,7 @@
       Engine.sounds["building"] = Engine.game.add.audio("building");
       Engine.sounds["boss"] = Engine.game.add.audio("boss");
       Engine.sounds["boss"].volume = 0.7;
-      Engine.sounds["boss-end"] = Engine.game.add.audio("boss");
+      Engine.sounds["boss-end"] = Engine.game.add.audio("boss-end");
       Engine.sounds["explode"] = Engine.game.add.audio("explode");
       Engine.sounds["player-fire"] = Engine.game.add.audio("player-fire");
       Engine.sounds["player-hit"] = Engine.game.add.audio("player-hit");
@@ -2860,11 +2887,15 @@
           if (_object.objectType == "vehicle" || _object.objectType == "missile") {
             _object.body.velocity.x = 0;
             _object.body.velocity.y = 0;
-            _object.state = VEHICLE_STATES.ICE;
+            _object.state = Engine.ENEMY_STATES.ICE;
           }
         }
       } else {
-        Engine.particles.startExplosion(Engine.particles.smoke, _object.centerX, _object.centerY);
+        if (_object.state == Engine.ENEMY_STATES.ICE) {
+          Engine.particles.startExplosion(Engine.particles.iceExplosion, _object.centerX, _object.centerY);
+        } else {
+          Engine.particles.startExplosion(Engine.particles.smoke, _object.centerX, _object.centerY);
+        }
         if (_object.objectType == "building") {
           Engine.particles.startCrumble(Engine.particles.dust, _object.centerX, _object.centerY);
           Engine.score += 200;
@@ -2899,7 +2930,7 @@
           _powerup.kill();
           Engine.game.camera.flash(9109504, 850);
           this.player.state = PLAYER_STATES.FLAME;
-          this.player.powerupTime = Engine.levelTime + 6;
+          this.player.powerupTime = Engine.levelTime + 7;
           break;
         case "ice-powerup":
           _powerup.kill();
@@ -2938,7 +2969,11 @@
       if (_building.health > 0) {
         Engine.particles.startCrumble(Engine.particles.dust, _building.centerX, _building.centerY);
       } else {
-        Engine.particles.startExplosion(Engine.particles.smoke, _building.centerX, _building.centerY);
+        if (_building.state == Engine.ENEMY_STATES.ICE) {
+          Engine.particles.startExplosion(Engine.particles.iceExplosion, _building.centerX, _building.centerY);
+        } else {
+          Engine.particles.startExplosion(Engine.particles.smoke, _building.centerX, _building.centerY);
+        }
         _building.kill();
         Engine.score += 250;
         Engine.sounds["building"].play();
@@ -2946,7 +2981,11 @@
       return;
     },
     hitPlayerVehicles: function(_player, _vehicle) {
-      Engine.particles.startExplosion(Engine.particles.smoke, _vehicle.centerX, _vehicle.centerY);
+      if (_vehicle.state == Engine.ENEMY_STATES.ICE) {
+        Engine.particles.startExplosion(Engine.particles.iceExplosion, _vehicle.centerX, _vehicle.centerY);
+      } else {
+        Engine.particles.startExplosion(Engine.particles.smoke, _vehicle.centerX, _vehicle.centerY);
+      }
       Engine.particles.startSmallExplosion(Engine.particles.dust, _vehicle.centerX, _vehicle.centerY);
       _vehicle.kill();
       Engine.score += 150;
@@ -2987,6 +3026,7 @@
       this.boss.health -= 0.333;
       if (this.boss.health > 0) {
         Engine.particles.startSmallExplosion(Engine.particles.smallSmoke, _projectile.centerX + 50, _projectile.centerY);
+        Engine.particles.startSplat(Engine.particles.bossDamageEmitter, _object.centerX + 50, _object.centerY);
         _projectile.kill();
         Engine.score += 25;
       } else {
@@ -2998,11 +3038,13 @@
         _projectile.kill();
         _object.kill();
         this.boss.alive = false;
-        this.boss.projectiles.removeAll(true);
+        this.boss.projectiles.forEachAlive(function(projectile) {
+          projectile.kill();
+        });
         this.player.health = 100;
         Engine.sounds["boss-end"].play();
         this.bossMusic.stop();
-        this.music.play();
+        this.endMusic.play();
         let normalizeBGTween = Engine.game.add.tween(this.environment).to({ alpha: 1 }, 1e3, Phaser.Easing.Linear.None, true, 0);
         normalizeBGTween.onComplete.addOnce(() => {
           Engine.gameMode = Engine.GAME_MODES.RUN;
@@ -3021,11 +3063,15 @@
       Engine.game.time.events.add(5e3, function() {
         this.music.stop();
         this.bossMusic.stop();
+        this.endMusic.stop();
         Engine.game.state.start("menu");
       }, this);
     },
     // clear all game objects
     clearGameObjects: function() {
+      this.vehicles.projectiles.forEachAlive(function(projectile) {
+        projectile.kill();
+      });
       this.vehicles.group.forEach(function(vehicle) {
         vehicle.kill();
       }, this);
@@ -3052,6 +3098,10 @@
     GAME_MODES: {
       RUN: 1,
       BOSS: 2
+    },
+    ENEMY_STATES: {
+      NORMAL: 0,
+      ICE: 1
     }
   };
   var Phaser2 = window.Phaser;
@@ -3068,7 +3118,7 @@
     Engine2.backgroundImage = gameOptions.backgroundImage;
     Engine2.backgroundMusic = gameOptions.music;
     Engine2.splatter = 1;
-    Engine2.gravity = 2500;
+    Engine2.gravity = gameOptions.gravity;
     Engine2.playerData = gameOptions.playerData;
     Engine2.weaponData = gameOptions.weaponData;
     Engine2.walletAddress = gameOptions.walletAddress;
@@ -3113,7 +3163,8 @@
         "frameRate": 24,
         "speedFactor": 1.05,
         "jumpFactor": 0.983
-      }
+      },
+      gravity: 2500
     });
   };
 })();

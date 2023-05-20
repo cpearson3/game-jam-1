@@ -82,8 +82,10 @@ export default class Missiles {
                 this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(5,6);
             } else if (Engine.score < 30000) {
 				this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3,4);
+			} else if (Engine.score < 50000) {
+				this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2,3);
 			} else {
-				this.spawnTime = Engine.levelTime + 1;
+				this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(1,2);
 			}
 			
 		} 

@@ -63,20 +63,22 @@ export default class Powerups {
         if (this.spawnTime < Engine.levelTime && Engine.score > 3500) {
 			let newSpawn = this.spawn();
             // set velocity and spawn timer based on score
-            if (Engine.score < 8000) {
+            if (Engine.score < 6000) {
                 this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(11,13);
                 newSpawn.body.velocity.y = 100;
-            } else if (Engine.score < 12000) {
+            } else if (Engine.score < 10000) {
                 this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(8,10);
                 newSpawn.body.velocity.y = 200;
             } else if (Engine.score < 30000) {
                 this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(6,7);
                 newSpawn.body.velocity.y = 300;
+            } else if (Engine.score < 50000) {
+                this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(3,5);
+                newSpawn.body.velocity.y = 350;
             } else {
                 this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2,4);
-                newSpawn.body.velocity.y = 350;
+                newSpawn.body.velocity.y = 400;
             }
-			
 		} 
     }
 }

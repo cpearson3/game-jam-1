@@ -4,13 +4,9 @@ export default class Particles {
     constructor() {
         // Create the particle emiiters
         this.splat = Engine.game.add.emitter(0, 0, 250);
-        // Set the 'pixel' image for the particles
         this.splat.makeParticles('pixel');
-        // The speed will be randomly picked between -100 and 25 for each particle
         this.splat.setYSpeed(-500, 500);
-        // Do the same for the x speed
         this.splat.setXSpeed(-500, 500);
-        // Use some gravity for the particles
         this.splat.gravity = Engine.gravity / 2;
         this.splat.setAlpha(0.6, 0, 1000);
         this.splat.setScale(2.15, 0.5, 2.15, 0.5, 1000);
@@ -55,6 +51,14 @@ export default class Particles {
         this.bigSmoke.setAlpha(1, 0, 2500);
         this.bigSmoke.setScale(7.5, 0, 7.5, 0, 2500);
 
+        this.iceExplosion = Engine.game.add.emitter(0, 0, 250);
+        this.iceExplosion.makeParticles('ice-particle');
+        this.iceExplosion.gravity = Engine.gravity / 2;
+        this.iceExplosion.setYSpeed(-150, -550);
+        this.iceExplosion.setXSpeed(-500, 500);
+        this.iceExplosion.setAlpha(0.5, 0, 2500);
+        this.iceExplosion.setScale(1.75, 0, 1.75, 0, 2500);
+
         // stars explosion particles
         this.stars = Engine.game.add.emitter(0, 0, 50);
         this.stars.makeParticles('yellow-star');
@@ -63,6 +67,17 @@ export default class Particles {
         this.stars.setAlpha(1, 0, 2000);
         this.stars.setScale(0.25, 2, 0.25, 2, 2000);
 
+    }
+    createBossDamageEmitter() {
+        let emitter = Engine.game.add.emitter(0,0, 250);
+        emitter.makeParticles('green-particle');
+        emitter.setYSpeed(-500, 500);
+        emitter.setXSpeed(-500, 500);
+        emitter.gravity = Engine.gravity / 2;
+        emitter.setAlpha(0.6, 0, 1000);
+        emitter.setScale(2.15, 0.5, 2.15, 0.5, 1000);
+
+        return emitter;
     }
 	startExplosion(emitter, x, y) {
         emitter.x = x;

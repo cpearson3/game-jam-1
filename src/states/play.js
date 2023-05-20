@@ -3,7 +3,7 @@ import Particles from '../objects/particles';
 
 import Player, { PLAYER_STATES } from '../objects/player'
 import Buildings from '../objects/buildings';
-import Vehicles, { VEHICLE_STATES } from '../objects/vehicles';
+import Vehicles from '../objects/vehicles';
 import Powerups from '../objects/powerups';
 import Missiles from '../objects/missiles';
 import Boss from '../objects/boss';
@@ -86,6 +86,10 @@ const PlayState = {
 		this.bossMusic.loop = true; // Make it loop
 		this.bossMusic.volume = 0.7;
 
+		this.endMusic = Engine.game.add.audio("end-music");
+		this.endMusic.loop = true;
+		this.endMusic.volume = 0.7;
+
 		Engine.sounds["health-powerup"] = Engine.game.add.audio("health-powerup");
 		Engine.sounds["flame-powerup"] = Engine.game.add.audio("flame-powerup");
 		Engine.sounds["bomb-powerup"] = Engine.game.add.audio("bomb-powerup");
@@ -99,7 +103,7 @@ const PlayState = {
 		Engine.sounds["building"] = Engine.game.add.audio("building");
 		Engine.sounds["boss"] = Engine.game.add.audio("boss");
 		Engine.sounds["boss"].volume = 0.7;
-		Engine.sounds["boss-end"] = Engine.game.add.audio("boss");
+		Engine.sounds["boss-end"] = Engine.game.add.audio("boss-end");
 		Engine.sounds["explode"] = Engine.game.add.audio("explode");
 
 		Engine.sounds["player-fire"] = Engine.game.add.audio("player-fire");
@@ -288,14 +292,19 @@ const PlayState = {
 				if (_object.objectType == 'vehicle' || _object.objectType == 'missile') {
 					_object.body.velocity.x = 0;
 					_object.body.velocity.y = 0;
-					_object.state = VEHICLE_STATES.ICE;
+					_object.state = Engine.ENEMY_STATES.ICE;
 				}
 			}
 
 		} else {
-			// destroy it
-			Engine.particles.startExplosion(Engine.particles.smoke, _object.centerX, _object.centerY);
-
+			// no health, destroy it
+			// check state for ice or fire explosion
+			if (_object.state == Engine.ENEMY_STATES.ICE) {
+				Engine.particles.startExplosion(Engine.particles.iceExplosion, _object.centerX, _object.centerY);
+			} else {
+				Engine.particles.startExplosion(Engine.particles.smoke, _object.centerX, _object.centerY);
+			}
+			
 			// if building, add dust explosion
 			if (_object.objectType == 'building') {
 				Engine.particles.startCrumble(Engine.particles.dust, _object.centerX, _object.centerY);
@@ -354,7 +363,7 @@ const PlayState = {
 			Engine.game.camera.flash(0x8b0000, 850);
 			// change player state
 			this.player.state = PLAYER_STATES.FLAME;
-			this.player.powerupTime = Engine.levelTime + 6;
+			this.player.powerupTime = Engine.levelTime + 7;
 			break;
 		case 'ice-powerup':
 			// kill powerup
@@ -413,7 +422,13 @@ const PlayState = {
 			Engine.particles.startCrumble(Engine.particles.dust, _building.centerX, _building.centerY);
 		} else {
 			// destroy it
-			Engine.particles.startExplosion(Engine.particles.smoke, _building.centerX, _building.centerY);
+			// check state for ice or fire explosion
+			if (_building.state == Engine.ENEMY_STATES.ICE) {
+				Engine.particles.startExplosion(Engine.particles.iceExplosion, _building.centerX, _building.centerY);
+			} else {
+				Engine.particles.startExplosion(Engine.particles.smoke, _building.centerX, _building.centerY);
+			}
+			
 			_building.kill();
 			// score!
 			Engine.score += 250;
@@ -425,9 +440,14 @@ const PlayState = {
 	},
 	hitPlayerVehicles: function(_player, _vehicle) {
 
-		// destroy it
+		// destroy it		
+		// check state for ice or fire explosion
+		if (_vehicle.state == Engine.ENEMY_STATES.ICE) {
+			Engine.particles.startExplosion(Engine.particles.iceExplosion, _vehicle.centerX, _vehicle.centerY);
+		} else {
+			Engine.particles.startExplosion(Engine.particles.smoke, _vehicle.centerX, _vehicle.centerY);
+		}
 		
-		Engine.particles.startExplosion(Engine.particles.smoke, _vehicle.centerX, _vehicle.centerY);
 		Engine.particles.startSmallExplosion(Engine.particles.dust, _vehicle.centerX, _vehicle.centerY);
 
 		_vehicle.kill();
@@ -491,7 +511,7 @@ const PlayState = {
 		if (this.boss.health > 0) {
 			// small explosion
 			Engine.particles.startSmallExplosion(Engine.particles.smallSmoke, _projectile.centerX + 50, _projectile.centerY);
-			
+			Engine.particles.startSplat(Engine.particles.bossDamageEmitter, _object.centerX + 50, _object.centerY);
 			_projectile.kill();
 			
 			// score!
@@ -510,7 +530,9 @@ const PlayState = {
 
 			// Boss dead - Long Live Boss
 			this.boss.alive = false;
-			this.boss.projectiles.removeAll(true);
+			this.boss.projectiles.forEachAlive(function(projectile) {
+				projectile.kill();
+			});
 
 			// give player 100 life as reward. it won't last 
 			this.player.health = 100; 
@@ -518,7 +540,7 @@ const PlayState = {
 			// play sound - todo: enum
 			Engine.sounds["boss-end"].play();
 			this.bossMusic.stop();
-			this.music.play();
+			this.endMusic.play();
 
 			// Change background and switch game mode on completion
 			let normalizeBGTween = Engine.game.add.tween(this.environment)
@@ -552,11 +574,17 @@ const PlayState = {
 			// this.buildings.removeAll();
 			this.music.stop();
 			this.bossMusic.stop();
+			this.endMusic.stop();
 			Engine.game.state.start('menu');
 		}, this);
 	},
 	// clear all game objects
 	clearGameObjects: function() {
+		// destroy vehicle projectiles
+		this.vehicles.projectiles.forEachAlive(function(projectile) {
+			projectile.kill();
+		});
+
 		// destroy vehicles
 		this.vehicles.group.forEach(function(vehicle) {
 			vehicle.kill();

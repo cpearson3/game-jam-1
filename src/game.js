@@ -17,6 +17,10 @@ let Engine = {
 	GAME_MODES: {
 		RUN: 1,
 		BOSS: 2
+	},
+	ENEMY_STATES: {
+		NORMAL: 0,
+		ICE: 1
 	}
 };
 
@@ -46,7 +50,7 @@ export function runGame(gameOptions) {
 	Engine.backgroundMusic = gameOptions.music;
 	Engine.splatter = 1;
 	
-	Engine.gravity = 2500;
+	Engine.gravity = gameOptions.gravity;
 	Engine.playerData = gameOptions.playerData;
 	Engine.weaponData = gameOptions.weaponData;
 	Engine.walletAddress = gameOptions.walletAddress;

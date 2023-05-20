@@ -40,11 +40,6 @@ export const VEHICLE_TYPES = [
 	}
 ]
 
-export const VEHICLE_STATES = {
-	NORMAL: 0,
-	ICE: 1
-}
-
 export default class Vehicles {
 	constructor() {
 
@@ -60,7 +55,8 @@ export default class Vehicles {
 		this.projectiles = Engine.game.add.group();
 		this.projectiles.enableBody = true;
 		this.projectiles.physicsBodyType = Phaser.Physics.ARCADE;
-		this.projectiles.createMultiple(50,  'bullet', 0, false);
+		// At most there will be 50 bullets on screen
+		this.projectiles.createMultiple(75,  'bullet', 0, false);
 		this.projectiles.setAll('anchor.x', 0.5);
 		this.projectiles.setAll('anchor.y', 0.5);
 		this.projectiles.setAll('outOfBoundsKill', true);
@@ -110,7 +106,7 @@ export default class Vehicles {
 		vehicle.config = vehicleType;
 		vehicle.objectType = "vehicle";
 		vehicle.nextFire = Engine.game.time.now + vehicleType.fireRate;
-		vehicle.state = VEHICLE_STATES.NORMAL;
+		vehicle.state = Engine.ENEMY_STATES.NORMAL;
 		return vehicle;
     }
 
@@ -129,7 +125,9 @@ export default class Vehicles {
 				} else if (Engine.score < 8000) {
 					this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2,4);
 				} else if (Engine.score < 30000) {
-					this.spawnTime = Engine.levelTime + 2;
+					this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2,3);
+				} else if (Engine.score < 50000) {
+					this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(1,2);
 				} else {
 					this.spawnTime = Engine.levelTime + 1;
 				}
@@ -141,8 +139,12 @@ export default class Vehicles {
 		} 
 
 		this.group.forEachAlive(function(vehicle) {
-			// fire
-			if (Engine.game.time.now > vehicle.nextFire && this.projectiles.countDead() > 0 && vehicle.inCamera && vehicle.state == VEHICLE_STATES.NORMAL) {
+			// fire under the right conditions
+			if (Engine.game.time.now > vehicle.nextFire 
+				&& this.projectiles.countDead() > 0 
+				&& vehicle.inCamera 
+				&& vehicle.state == Engine.ENEMY_STATES.NORMAL) 
+			{
 				this.fire(vehicle, player);
 			}
 		}, this)

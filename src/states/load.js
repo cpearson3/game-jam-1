@@ -18,7 +18,8 @@ const LoadState = {
 		Engine.game.load.image('yellow-star', Engine.BASE_URL+'assets/yellow-star.png');
 		Engine.game.load.image('projectile', Engine.BASE_URL+'assets/projectile.png');
 		Engine.game.load.image('blue-flame',Engine.BASE_URL+'assets/blue-flame.png');
-		
+		Engine.game.load.image('ice-particle', Engine.BASE_URL+'assets/ice_particle.png');
+		Engine.game.load.image('green-particle', Engine.BASE_URL+'assets/green_particle.png');
 		Engine.game.load.image('environment', Engine.backgroundImage);
 		
 		// Buildings
@@ -52,6 +53,7 @@ const LoadState = {
 		// Load sounds
 		Engine.game.load.audio('bg-music', Engine.BASE_URL+'assets/sounds/bg-music.mp3');
 		Engine.game.load.audio('boss-music', Engine.BASE_URL+'assets/sounds/boss-music.mp3');
+		Engine.game.load.audio('end-music', Engine.BASE_URL+'assets/sounds/end-music.mp3');
 		Engine.game.load.audio('menu-music', Engine.BASE_URL+'assets/sounds/menu-music.mp3');
 		Engine.game.load.audio('tank', Engine.BASE_URL+'assets/sounds/tank.mp3');
 		Engine.game.load.audio('truck', Engine.BASE_URL+'assets/sounds/truck.mp3');

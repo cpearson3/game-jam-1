@@ -29,6 +29,7 @@ window.onload = function() {
             "frameRate": 24,
             "speedFactor": 1.05,
             "jumpFactor": 0.983
-        }
+        },
+        gravity: 2500
     })
 }

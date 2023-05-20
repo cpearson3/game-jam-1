@@ -64,6 +64,9 @@ export default class Boss {
 		this.projectiles.setAll('outOfBoundsKill', true);
 		this.projectiles.setAll('checkWorldBounds', true);
 
+		// create damage emitter
+		Engine.particles.bossDamageEmitter = Engine.particles.createBossDamageEmitter();
+
 		// fade him in
 		this.sprite.alpha = 0;
 		let fadeInTween = Engine.game.add.tween(this.sprite)
@@ -93,7 +96,7 @@ export default class Boss {
 			if (this.health < 100 && this.alive) {
 				this.health += 0.02;
 			}
-			
+
 		}
 	}
 
