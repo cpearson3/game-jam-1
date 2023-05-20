@@ -62,7 +62,7 @@ export function runGame(gameOptions) {
 	// Initialize in-game counters
 	Engine.score = 0;
 	Engine.deaths = 0;
-	Engine.aimAssist = false;
+	Engine.aimAssist = true;
 	// Game timer in seconds.
 	Engine.levelTime = 0;
 

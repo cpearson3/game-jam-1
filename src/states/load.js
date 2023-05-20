@@ -11,6 +11,7 @@ const LoadState = {
 
 		// load all game assets
 		Engine.game.load.image('pixel', Engine.BASE_URL+'assets/red_particle.png');
+		Engine.game.load.image('crosshairs', Engine.BASE_URL+'assets/crosshairs.png');
 		Engine.game.load.image('bullet', Engine.BASE_URL+'assets/bullet.png');
 		Engine.game.load.image('smoke', Engine.BASE_URL+'assets/smoke.png');
 		Engine.game.load.image('dust', Engine.BASE_URL+'assets/dust.png');

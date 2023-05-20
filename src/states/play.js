@@ -23,6 +23,10 @@ const PlayState = {
 		this.environment.fixedToCamera = true;
 		this.environment.autoScroll(-Engine.SCROLL_SPEED, 0);
 
+		// add aim line (behind player)
+		this.aimline = Engine.game.add.graphics(0,0);
+		this.aimline.fixedToCamera = true;
+
 		// create player
 		this.player = new Player();
 		this.player.sprite.animations.play(this.player.facing);
@@ -55,10 +59,6 @@ const PlayState = {
 		this.boss.healthBar.outlineColor = 0x5f6f96;
 		this.boss.healthBar.fillColor = 0x283a66;
 
-		// add aim line
-		this.player.aimLine = Engine.game.add.graphics(0,0);
-		this.player.aimLine.fixedToCamera = true;
-
 		// draw initial health bar
 		this.drawHealthBar(this.player);
 		
@@ -81,11 +81,11 @@ const PlayState = {
 		};
 
 		// Create key to toggle aim assist
-		var aimKey = Engine.game.input.keyboard.addKey(Phaser.Keyboard.Q);
+		var aimKey = Engine.game.input.keyboard.addKey(Phaser.Keyboard.P);
 		// Add call back to toggle aiming
 		aimKey.onDown.add(function() {
 			Engine.aimAssist = !Engine.aimAssist;
-			this.player.aimLine.clear();
+			this.aimline.clear();
 		}, this);
 
 		// Add sounds
@@ -101,6 +101,9 @@ const PlayState = {
 		this.endMusic = Engine.game.add.audio("end-music");
 		this.endMusic.loop = true;
 		this.endMusic.volume = 1;
+
+		this.crosshairs = Engine.game.add.sprite(this.game.input.activePointer.x, this.game.input.activePointer.y, "crosshairs");
+		this.crosshairs.anchor.setTo(0.5, 0.5);
 
 		Engine.sounds["health-powerup"] = Engine.game.add.audio("health-powerup");
 		Engine.sounds["flame-powerup"] = Engine.game.add.audio("flame-powerup");
@@ -136,27 +139,7 @@ const PlayState = {
 		}, this);
 		this.levelTimer.start();
 	},
-	drawHealthBar: function(gameObject) {
-
-		var maxWidth = Engine.game.camera.width - 16;
-		var height = 32;
-		var width = maxWidth * ( gameObject.health / 100 );
-
-		gameObject.healthBar.clear();
-
-		if (width > 0) {
-			gameObject.healthBar.beginFill(gameObject.healthBar.fillColor, 0.5);
-			gameObject.healthBar.lineStyle(2, gameObject.healthBar.outlineColor, 0.8);
-		
-			gameObject.healthBar.moveTo(0, 0);
-			gameObject.healthBar.lineTo(width, 0);
-			gameObject.healthBar.lineTo(width, height);
-			gameObject.healthBar.lineTo(0, height);
-			gameObject.healthBar.lineTo(0, 0);
-		
-			gameObject.healthBar.endFill();
-		}
-	},
+	// Main update loop
 	update: function() {
 
 		// check game state and switch if necessary
@@ -262,16 +245,9 @@ const PlayState = {
 		}
 
 		// draw aim line
-		if (this.player.health > 0 && Engine.aimAssist) {
-			let ax = this.game.input.activePointer.x;
-			let ay = this.game.input.activePointer.y;
-
-			this.player.aimLine.clear();
-			this.player.aimLine.lineStyle(2, 0xffffff);
-			this.player.aimLine.moveTo(this.player.sprite.x + 25, this.player.sprite.y - 100);
-			this.player.aimLine.lineTo(ax,ay);
-
-		}
+		this.drawAimLine();
+		// draw crosshair
+		this.crosshairs.reset(this.game.input.activePointer.x, this.game.input.activePointer.y);
 
 		// update player movement
 		this.player.update(this.input);
@@ -289,6 +265,40 @@ const PlayState = {
 			this.bossText.text = `Boss: ${bossHealthText}`;
 		} else {
 			this.bossText.text = '';
+		}
+	},
+	// UI graphics functions
+	drawHealthBar: function(gameObject) {
+
+		var maxWidth = Engine.game.camera.width - 16;
+		var height = 32;
+		var width = maxWidth * ( gameObject.health / 100 );
+
+		gameObject.healthBar.clear();
+
+		if (width > 0) {
+			gameObject.healthBar.beginFill(gameObject.healthBar.fillColor, 0.5);
+			gameObject.healthBar.lineStyle(2, gameObject.healthBar.outlineColor, 0.8);
+		
+			gameObject.healthBar.moveTo(0, 0);
+			gameObject.healthBar.lineTo(width, 0);
+			gameObject.healthBar.lineTo(width, height);
+			gameObject.healthBar.lineTo(0, height);
+			gameObject.healthBar.lineTo(0, 0);
+		
+			gameObject.healthBar.endFill();
+		}
+	},
+	drawAimLine: function() {
+		if (this.player.health > 0 && Engine.aimAssist) {
+			let ax = this.game.input.activePointer.x;
+			let ay = this.game.input.activePointer.y;
+
+			this.aimline.clear();
+			this.aimline.lineStyle(2, 0x4a040c);
+			this.aimline.moveTo(this.player.sprite.x + 15, this.player.sprite.y - 105);
+			this.aimline.lineTo(ax,ay);
+
 		}
 	},
 	// Callback for player projectile hits
@@ -590,7 +600,7 @@ const PlayState = {
 			this.player.sprite.kill();
 			// Flash screen
 			Engine.game.camera.flash(0x5f1414, 850);
-			this.player.aimLine.clear();
+			this.aimline.clear();
 		}
 
 		// Call the 'startMenu' function in 1000ms

@@ -1922,6 +1922,7 @@
       progressBar.anchor.setTo(0.5, 0.5);
       Engine.game.load.setPreloadSprite(progressBar);
       Engine.game.load.image("pixel", Engine.BASE_URL + "assets/red_particle.png");
+      Engine.game.load.image("crosshairs", Engine.BASE_URL + "assets/crosshairs.png");
       Engine.game.load.image("bullet", Engine.BASE_URL + "assets/bullet.png");
       Engine.game.load.image("smoke", Engine.BASE_URL + "assets/smoke.png");
       Engine.game.load.image("dust", Engine.BASE_URL + "assets/dust.png");
@@ -2036,7 +2037,7 @@
       startButton.input.useHandCursor = true;
       startButton.events.onInputUp.add(this.start, this);
       let instructionsY = startY + 100;
-      var instructionsLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, instructionsY, `A Left. D Right. SPACE Jumps. MOUSE Shoots `, { font: `24px VT323`, fill: "#ffffff" });
+      var instructionsLabel = Engine.game.add.text(Engine.GAME_WIDTH / 2, instructionsY, `A Left. D Right. SPACE Jumps. MOUSE Shoots.`, { font: `24px VT323`, fill: "#ffffff" });
       instructionsLabel.anchor.setTo(0.5, 0.5);
       Engine.game.add.tween(startButton).to({ alpha: 1 }, 1e3, Phaser.Easing.Linear.None, true, 0.75, 500, true);
       var startKey = Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
@@ -2726,6 +2727,8 @@
       this.environment = Engine.game.add.tileSprite(0, 0, Engine.GAME_WIDTH, Engine.GAME_HEIGHT, "environment");
       this.environment.fixedToCamera = true;
       this.environment.autoScroll(-Engine.SCROLL_SPEED, 0);
+      this.aimline = Engine.game.add.graphics(0, 0);
+      this.aimline.fixedToCamera = true;
       this.player = new Player();
       this.player.sprite.animations.play(this.player.facing);
       this.boss = new Boss();
@@ -2742,8 +2745,6 @@
       this.boss.healthBar.fixedToCamera = true;
       this.boss.healthBar.outlineColor = 6254486;
       this.boss.healthBar.fillColor = 2636390;
-      this.player.aimLine = Engine.game.add.graphics(0, 0);
-      this.player.aimLine.fixedToCamera = true;
       this.drawHealthBar(this.player);
       this.gameText = Engine.game.add.text(12, 12, "0", { font: "22px VT323", fill: "#ffffff", align: "left" });
       this.gameText.fixedToCamera = true;
@@ -2757,10 +2758,10 @@
         right: Engine.game.input.keyboard.addKey(Phaser.Keyboard.D),
         jump: Engine.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
       };
-      var aimKey = Engine.game.input.keyboard.addKey(Phaser.Keyboard.Q);
+      var aimKey = Engine.game.input.keyboard.addKey(Phaser.Keyboard.P);
       aimKey.onDown.add(function() {
         Engine.aimAssist = !Engine.aimAssist;
-        this.player.aimLine.clear();
+        this.aimline.clear();
       }, this);
       this.music = Engine.game.add.audio("bg-music");
       this.music.loop = true;
@@ -2772,6 +2773,8 @@
       this.endMusic = Engine.game.add.audio("end-music");
       this.endMusic.loop = true;
       this.endMusic.volume = 1;
+      this.crosshairs = Engine.game.add.sprite(this.game.input.activePointer.x, this.game.input.activePointer.y, "crosshairs");
+      this.crosshairs.anchor.setTo(0.5, 0.5);
       Engine.sounds["health-powerup"] = Engine.game.add.audio("health-powerup");
       Engine.sounds["flame-powerup"] = Engine.game.add.audio("flame-powerup");
       Engine.sounds["bomb-powerup"] = Engine.game.add.audio("bomb-powerup");
@@ -2799,22 +2802,7 @@
       }, this);
       this.levelTimer.start();
     },
-    drawHealthBar: function(gameObject) {
-      var maxWidth = Engine.game.camera.width - 16;
-      var height = 32;
-      var width = maxWidth * (gameObject.health / 100);
-      gameObject.healthBar.clear();
-      if (width > 0) {
-        gameObject.healthBar.beginFill(gameObject.healthBar.fillColor, 0.5);
-        gameObject.healthBar.lineStyle(2, gameObject.healthBar.outlineColor, 0.8);
-        gameObject.healthBar.moveTo(0, 0);
-        gameObject.healthBar.lineTo(width, 0);
-        gameObject.healthBar.lineTo(width, height);
-        gameObject.healthBar.lineTo(0, height);
-        gameObject.healthBar.lineTo(0, 0);
-        gameObject.healthBar.endFill();
-      }
-    },
+    // Main update loop
     update: function() {
       if (Engine.score > 15e3 && this.boss.health > 0) {
         Engine.gameMode = Engine.GAME_MODES.BOSS;
@@ -2868,14 +2856,8 @@
       if (this.game.input.activePointer.isDown) {
         this.player.fire();
       }
-      if (this.player.health > 0 && Engine.aimAssist) {
-        let ax = this.game.input.activePointer.x;
-        let ay = this.game.input.activePointer.y;
-        this.player.aimLine.clear();
-        this.player.aimLine.lineStyle(2, 16777215);
-        this.player.aimLine.moveTo(this.player.sprite.x + 25, this.player.sprite.y - 100);
-        this.player.aimLine.lineTo(ax, ay);
-      }
+      this.drawAimLine();
+      this.crosshairs.reset(this.game.input.activePointer.x, this.game.input.activePointer.y);
       this.player.update(this.input);
       this.player.updateProjectiles();
       const healthText = this.player.health > 0 ? Math.trunc(this.player.health) : "dead";
@@ -2886,6 +2868,33 @@
         this.bossText.text = `Boss: ${bossHealthText}`;
       } else {
         this.bossText.text = "";
+      }
+    },
+    // UI graphics functions
+    drawHealthBar: function(gameObject) {
+      var maxWidth = Engine.game.camera.width - 16;
+      var height = 32;
+      var width = maxWidth * (gameObject.health / 100);
+      gameObject.healthBar.clear();
+      if (width > 0) {
+        gameObject.healthBar.beginFill(gameObject.healthBar.fillColor, 0.5);
+        gameObject.healthBar.lineStyle(2, gameObject.healthBar.outlineColor, 0.8);
+        gameObject.healthBar.moveTo(0, 0);
+        gameObject.healthBar.lineTo(width, 0);
+        gameObject.healthBar.lineTo(width, height);
+        gameObject.healthBar.lineTo(0, height);
+        gameObject.healthBar.lineTo(0, 0);
+        gameObject.healthBar.endFill();
+      }
+    },
+    drawAimLine: function() {
+      if (this.player.health > 0 && Engine.aimAssist) {
+        let ax = this.game.input.activePointer.x;
+        let ay = this.game.input.activePointer.y;
+        this.aimline.clear();
+        this.aimline.lineStyle(2, 4850700);
+        this.aimline.moveTo(this.player.sprite.x + 15, this.player.sprite.y - 105);
+        this.aimline.lineTo(ax, ay);
       }
     },
     // Callback for player projectile hits
@@ -3074,7 +3083,7 @@
         Engine.deaths += 1;
         this.player.sprite.kill();
         Engine.game.camera.flash(6231060, 850);
-        this.player.aimLine.clear();
+        this.aimline.clear();
       }
       Engine.game.time.events.add(5e3, function() {
         this.music.stop();
@@ -3142,7 +3151,7 @@
     Engine2.muteStatus = gameOptions.muted;
     Engine2.score = 0;
     Engine2.deaths = 0;
-    Engine2.aimAssist = false;
+    Engine2.aimAssist = true;
     Engine2.levelTime = 0;
     setCavasSize();
     Engine2.game = new Phaser2.Game(Engine2.GAME_WIDTH, Engine2.GAME_HEIGHT, Phaser2.AUTO, "game");
