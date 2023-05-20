@@ -7,7 +7,7 @@ Game controls:
 *   Space - Jumps
 *   Mouse Click - Fires towards mouse pointer
 
-Game art is from the [Metaboy Project](https://metaboy.run), [Open Clipart](https://openclipart.org/), and personal projects.  Sound samples are from [Splice](https://splice.com/). Tools used to make the game include:
+Game art is from [Metaboy](https://metaboy.run), [Open Clipart](https://openclipart.org/), and personal projects.  Sound samples are from [Splice](https://splice.com/). Tools used to make the game include:
 
 *   [PhaserJS](https://phaser.io/)
 *   [Visual Studio Code](https://code.visualstudio.com/)
