@@ -157,6 +157,7 @@ export default class Player {
 					switch(this.state) {
 					case PLAYER_STATES.FLAME:
 						projectile.scale.setTo(2.5);
+						projectile.tint = 0xffffff;
 						break;
 					case PLAYER_STATES.ICE:
 						projectile.scale.setTo(1);
