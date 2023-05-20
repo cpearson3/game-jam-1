@@ -54,24 +54,27 @@ export default class Powerups {
 
 		powerup.body.gravity.y = 0;
 		powerup.body.immovable = true;
-		// powerup.body.moves = false;
-		powerup.body.velocity.y = 350;
         powerup.objectType = "powerup"; // clean this up
         powerup.config = powerupType;
 		return powerup;
     }
 
     update() {
-        if (this.spawnTime < Engine.levelTime && Engine.score > 4000) {
-			this.spawn();
+        if (this.spawnTime < Engine.levelTime && Engine.score > 3500) {
+			let newSpawn = this.spawn();
+            // set velocity and spawn timer based on score
             if (Engine.score < 8000) {
                 this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(11,13);
+                newSpawn.body.velocity.y = 100;
             } else if (Engine.score < 12000) {
                 this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(8,10);
+                newSpawn.body.velocity.y = 200;
             } else if (Engine.score < 30000) {
                 this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(6,7);
+                newSpawn.body.velocity.y = 300;
             } else {
                 this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2,4);
+                newSpawn.body.velocity.y = 350;
             }
 			
 		} 

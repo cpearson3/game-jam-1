@@ -530,8 +530,7 @@ const PlayState = {
 				
 				this.boss.hasSpawned = false;
 			}, this);
-			
-
+		
 		}
 
 		this.drawHealthBar(this.boss);
@@ -541,7 +540,6 @@ const PlayState = {
 		if (this.player.alive) {
 			this.player.alive = false;
 			Engine.deaths += 1;
-			Engine.levelDeaths += 1;
 			
 			this.player.sprite.kill();
 			// Flash screen

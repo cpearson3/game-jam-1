@@ -2502,22 +2502,25 @@
       );
       powerup.body.gravity.y = 0;
       powerup.body.immovable = true;
-      powerup.body.velocity.y = 350;
       powerup.objectType = "powerup";
       powerup.config = powerupType;
       return powerup;
     }
     update() {
-      if (this.spawnTime < Engine.levelTime && Engine.score > 4e3) {
-        this.spawn();
+      if (this.spawnTime < Engine.levelTime && Engine.score > 3500) {
+        let newSpawn = this.spawn();
         if (Engine.score < 8e3) {
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(11, 13);
+          newSpawn.body.velocity.y = 100;
         } else if (Engine.score < 12e3) {
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(8, 10);
+          newSpawn.body.velocity.y = 200;
         } else if (Engine.score < 3e4) {
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(6, 7);
+          newSpawn.body.velocity.y = 300;
         } else {
           this.spawnTime = Engine.levelTime + Engine.game.rnd.integerInRange(2, 4);
+          newSpawn.body.velocity.y = 350;
         }
       }
     }
@@ -3012,7 +3015,6 @@
       if (this.player.alive) {
         this.player.alive = false;
         Engine.deaths += 1;
-        Engine.levelDeaths += 1;
         this.player.sprite.kill();
         Engine.game.camera.flash(6231060, 850);
       }

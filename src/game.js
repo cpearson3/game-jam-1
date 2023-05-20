@@ -59,7 +59,7 @@ export function runGame(gameOptions) {
 	Engine.score = 0;
 	Engine.deaths = 0;
 
-	// Game timer in seconds
+	// Game timer in seconds.
 	Engine.levelTime = 0;
 
 	setCavasSize();
